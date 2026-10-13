@@ -38,7 +38,7 @@ export function LoginPage({ onLogin }) {
           <div className="auth-heading">
             {isSignup && <span className="auth-kicker">GET STARTED</span>}
             <h2>{isSignup ? 'Create your workspace' : 'Sign in to continue'}</h2>
-            <p>{isSignup ? 'Create a local demo workspace. No account is sent anywhere.' : 'Continue to a local demo workspace.'}</p>
+            <p>{isSignup ? 'Set up your workspace to begin.' : 'Enter the workspace to begin.'}</p>
           </div>
 
           <div className="auth-mode-tabs" role="tablist" aria-label="Account access">
@@ -87,9 +87,6 @@ export function LoginPage({ onLogin }) {
               {isSignup ? 'Create demo account' : 'Login'}
               <ArrowRight size={16} aria-hidden="true" />
             </button>
-            <p className="auth-demo-note">
-              Demo mode: any input, or no input, will continue. Nothing is sent to a server.
-            </p>
           </form>
 
         </div>

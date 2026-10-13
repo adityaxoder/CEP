@@ -49,6 +49,11 @@ export function AnalyzePage({ activeTab, selectedResult, onTabChange, onAnalysis
   const provided = { text: Boolean(text.trim()), image: Boolean(imageFile), audio: Boolean(audioFile) };
   const signalCount = Object.values(provided).filter(Boolean).length;
   const displayedResult = result || selectedResult;
+  const submitHint = !hasInput
+    ? 'Add at least one signal to continue.'
+    : !consented
+      ? 'Confirm the estimate notice to continue.'
+      : 'Fix the file issue before analysing.';
 
   function handleReset() {
     setText('');
@@ -140,16 +145,12 @@ export function AnalyzePage({ activeTab, selectedResult, onTabChange, onAnalysis
 
           <ConsentNotice checked={consented} onConsent={setConsented} />
           <form onSubmit={handleSubmit} className="analysis-form">
-            <button type="submit" className="analyze-btn" disabled={!canSubmit}>
+            <button type="submit" className="analyze-btn" disabled={!canSubmit} aria-describedby={!canSubmit ? 'submit-hint' : undefined}>
               {status === 'loading' ? <><Loader2 size={16} className="spin" /> Analysing…</> : <><Sparkles size={16} /> Analyse {activeTab}</>}
             </button>
             {status !== 'idle' && <button type="button" className="reset-btn" onClick={handleReset}><RotateCcw size={14} /> Reset</button>}
           </form>
-          {!canSubmit && status === 'idle' && (
-            <p className="submit-hint" role="status">
-              {!hasInput ? 'Add at least one signal to continue.' : !consented ? 'Confirm the estimate notice to continue.' : 'Fix the file issue before analysing.'}
-            </p>
-          )}
+          {!canSubmit && status === 'idle' && <p id="submit-hint" className="submit-hint" role="status">{submitHint}</p>}
         </section>
       )}
 
