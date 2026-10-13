@@ -114,7 +114,7 @@ export function AnalyzePage({ activeTab, selectedResult, onTabChange, onAnalysis
           </section>
         )
       ) : (
-        <section className="analysis-workspace section-card">
+        <section className="analysis-workspace section-card" aria-busy={status === 'loading'}>
           <div className="analysis-workspace-header">
             <div className="analysis-mode-icon"><ModeIcon size={20} aria-hidden="true" /></div>
             <div>
@@ -154,7 +154,16 @@ export function AnalyzePage({ activeTab, selectedResult, onTabChange, onAnalysis
         </section>
       )}
 
-      {!isResultsTab && status === 'loading' && <div className="status-panel status-panel--loading"><Loader2 size={27} className="spin" /><p>Analysing your content…</p></div>}
+      {!isResultsTab && status === 'loading' && (
+        <div className="status-panel status-panel--loading" role="status" aria-live="polite">
+          <Loader2 size={27} className="spin" aria-hidden="true" />
+          <p className="status-title">Analysing your content…</p>
+          <div className="processing-progress" role="progressbar" aria-label="Analysis in progress" aria-valuemin="0" aria-valuemax="100" aria-valuetext="Processing">
+            <span />
+          </div>
+          <p className="status-body">Preparing your selected signals. Keep this window open.</p>
+        </div>
+      )}
       {!isResultsTab && status === 'not-connected' && <div className="status-panel status-panel--warn"><WifiOff size={27} /><p className="status-title">Analysis is not connected yet</p><p className="status-body">The backend endpoint has not been configured yet.</p></div>}
       {!isResultsTab && status === 'error' && <div className="status-panel status-panel--error"><AlertCircle size={27} /><p className="status-title">Analysis failed</p><p className="status-body">{errorMsg}</p><button type="button" className="btn-ghost" onClick={() => analyze(lastPayload)}>Try again</button></div>}
     </main>

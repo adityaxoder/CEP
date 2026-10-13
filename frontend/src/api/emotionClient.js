@@ -37,14 +37,59 @@
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || null;
 const USE_MOCK = import.meta.env.VITE_USE_MOCK_ANALYSIS !== 'false';
+const MOCK_DELAY_MS = 900;
+
+function createRequestId(prefix) {
+  const randomId = typeof crypto !== 'undefined' && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  return `${prefix}-${randomId}`;
+}
+
+function getTextResult(text) {
+  const normalizedText = text.toLowerCase();
+  const concernedCue = /\b(worried|concerned|problem|issue|sorry|difficult|upset)\b/.test(normalizedText);
+  const positiveCue = /\b(thanks|thank you|great|happy|appreciate|excellent|love)\b/.test(normalizedText);
+
+  if (concernedCue) {
+    return {
+      label: 'Concerned',
+      confidence: 0.79,
+      explanation: 'The wording includes cues of concern or difficulty that may indicate a more serious tone.',
+    };
+  }
+
+  if (positiveCue) {
+    return {
+      label: 'Warm',
+      confidence: 0.84,
+      explanation: 'The wording includes appreciative or positive language with a friendly tone.',
+    };
+  }
+
+  return {
+    label: 'Calm',
+    confidence: 0.76,
+    explanation: 'The wording appears measured and conversational with no strong emotional cue detected.',
+  };
+}
+
+function normalizeAnalysisResult(data) {
+  return {
+    requestId: data?.requestId || createRequestId('request'),
+    modalities: {
+      text: data?.modalities?.text || null,
+      image: data?.modalities?.image || null,
+      audio: data?.modalities?.audio || null,
+    },
+    mismatch: data?.mismatch || null,
+    suggestion: data?.suggestion || null,
+  };
+}
 
 function createMockResult({ text, image, audio }) {
   const modalities = {
-    text: text ? {
-      label: 'Calm',
-      confidence: 0.82,
-      explanation: 'The wording uses measured language with a constructive tone.',
-    } : null,
+    text: text ? getTextResult(text) : null,
     image: image ? {
       label: 'Positive',
       confidence: 0.68,
@@ -61,7 +106,7 @@ function createMockResult({ text, image, audio }) {
   const mismatch = available.length > 1 && new Set(available.map(({ label }) => label)).size > 1;
 
   return {
-    requestId: `mock-${Date.now()}`,
+    requestId: createRequestId('mock'),
     modalities,
     mismatch: mismatch ? {
       detected: true,
@@ -79,12 +124,16 @@ function createMockResult({ text, image, audio }) {
  * @throws {Error} with a user-friendly message
  */
 export async function analyzeContent({ text, image, audio }) {
+  if (!text && !image && !audio) {
+    throw new Error('Add at least one signal before requesting an analysis.');
+  }
+
   if (USE_MOCK) {
-    await new Promise((resolve) => setTimeout(resolve, 900));
+    await new Promise((resolve) => setTimeout(resolve, MOCK_DELAY_MS));
     if (text?.toLowerCase().includes('[error]')) {
       throw new Error('The mock service could not process this sample. Remove [error] and try again.');
     }
-    return createMockResult({ text, image, audio });
+    return normalizeAnalysisResult(createMockResult({ text, image, audio }));
   }
 
   if (!BASE_URL) {
@@ -109,7 +158,7 @@ export async function analyzeContent({ text, image, audio }) {
     throw new Error(`Analysis failed (${response.status}): ${detail}`);
   }
 
-  return response.json();
+  return normalizeAnalysisResult(await response.json());
 }
 
 /** Sentinel error thrown when BASE_URL is not configured. */
