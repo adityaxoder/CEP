@@ -2,12 +2,15 @@
  * Header – top navigation bar.
  * Design matches the reference: brand | tab nav | action buttons
  */
-import { Brain, Plus, UserPlus } from 'lucide-react';
+import { Brain } from 'lucide-react';
 
 export function Header({ currentPage, onNavigate }) {
   const navItems = [
-    { id: 'analyze', label: 'Analyse' },
-    { id: 'history', label: 'History' },
+    { id: 'text', label: 'Text' },
+    { id: 'image', label: 'Image' },
+    { id: 'voice', label: 'Voice' },
+    { id: 'multimodal', label: 'Multimodal' },
+    { id: 'analysis', label: 'Analysis' },
   ];
 
   return (
@@ -44,17 +47,6 @@ export function Header({ currentPage, onNavigate }) {
           </ul>
         </nav>
 
-        {/* Action buttons (right) */}
-        <div className="header-actions">
-          <button type="button" className="btn-ghost" aria-label="Invite team member">
-            <UserPlus size={14} aria-hidden="true" />
-            Invite
-          </button>
-          <button type="button" className="btn-primary" aria-label="New analysis">
-            <Plus size={14} aria-hidden="true" />
-            New Analysis
-          </button>
-        </div>
       </div>
     </header>
   );

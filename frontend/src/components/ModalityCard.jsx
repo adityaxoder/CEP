@@ -6,20 +6,20 @@
  *   Emotion label badge
  *   Explanation text
  */
-import { Info } from 'lucide-react';
+import { Info, Image as ImageIcon, MessageSquare, Mic } from 'lucide-react';
 
-const MODALITY_ICONS = { text: '💬', image: '🖼️', audio: '🎙️' };
+const MODALITY_ICONS = { text: MessageSquare, image: ImageIcon, audio: Mic };
 const MODALITY_LABELS = { text: 'Text', image: 'Image', audio: 'Voice' };
 
 export function ModalityCard({ modality, data, missing }) {
-  const icon  = MODALITY_ICONS[modality];
+  const Icon  = MODALITY_ICONS[modality];
   const label = MODALITY_LABELS[modality];
 
   if (missing) {
     return (
       <div className="modality-card modality-card--dim" aria-label={`${label} – not provided`}>
         <div className="modality-card-header">
-          <span className="modality-emoji" aria-hidden="true">{icon}</span>
+          <span className="modality-emoji" aria-hidden="true"><Icon size={13} /></span>
           <h3 className="modality-name">{label}</h3>
         </div>
         <p className="modality-status">
@@ -33,7 +33,7 @@ export function ModalityCard({ modality, data, missing }) {
     return (
       <div className="modality-card modality-card--dim" aria-label={`${label} – unavailable`}>
         <div className="modality-card-header">
-          <span className="modality-emoji" aria-hidden="true">{icon}</span>
+          <span className="modality-emoji" aria-hidden="true"><Icon size={13} /></span>
           <h3 className="modality-name">{label}</h3>
         </div>
         <p className="modality-status">
@@ -71,7 +71,7 @@ export function ModalityCard({ modality, data, missing }) {
     <div className="modality-card" aria-label={`${label} modality result`}>
       {/* Header row */}
       <div className="modality-card-header">
-        <span className="modality-emoji" aria-hidden="true">{icon}</span>
+        <span className="modality-emoji" aria-hidden="true"><Icon size={13} /></span>
         <h3 className="modality-name">{label}</h3>
         <div className="modality-status-wrap">
           <span className={`status-dot ${dotClass}`} aria-hidden="true" />
