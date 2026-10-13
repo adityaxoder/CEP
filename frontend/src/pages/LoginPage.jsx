@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowRight, Brain, Check, LockKeyhole, Mail, UserRound } from 'lucide-react';
+import { ArrowRight, Check, LockKeyhole, Mail, UserRound } from 'lucide-react';
 
 export function LoginPage({ onLogin }) {
   const [mode, setMode] = useState('login');
@@ -13,10 +13,9 @@ export function LoginPage({ onLogin }) {
 
   return (
     <main className="auth-page" id="main-content">
-      <section className="auth-visual" aria-label="EmotionIQ overview">
+      <section className="auth-visual" aria-label="BrainiacConvo overview">
         <div className="auth-visual-top">
-          <div className="auth-brand-mark" aria-hidden="true"><Brain size={20} /></div>
-          <span className="auth-brand-name">EmotionIQ</span>
+          <span className="auth-brand-name">BrainiacConvo</span>
         </div>
 
         <div className="auth-visual-copy">
@@ -30,11 +29,10 @@ export function LoginPage({ onLogin }) {
         </div>
       </section>
 
-      <section className="auth-panel" aria-label={isSignup ? 'Create an EmotionIQ account' : 'Sign in to EmotionIQ'}>
+      <section className="auth-panel" aria-label={isSignup ? 'Create a BrainiacConvo workspace' : 'Sign in to BrainiacConvo'}>
         <div className="auth-form-wrap">
           <div className="auth-mobile-brand">
-            <div className="auth-brand-mark" aria-hidden="true"><Brain size={18} /></div>
-            <span className="auth-brand-name">EmotionIQ</span>
+            <span className="auth-brand-name">BrainiacConvo</span>
           </div>
 
           <div className="auth-heading">
@@ -71,7 +69,7 @@ export function LoginPage({ onLogin }) {
               <span>Password</span>
               <span className="auth-input-wrap">
                 <LockKeyhole size={16} aria-hidden="true" />
-                <input type="text" name="password" placeholder="Enter anything" autoComplete={isSignup ? 'new-password' : 'current-password'} />
+                <input type="password" name="password" placeholder="Enter anything" autoComplete={isSignup ? 'new-password' : 'current-password'} />
               </span>
             </label>
 
@@ -89,6 +87,9 @@ export function LoginPage({ onLogin }) {
               {isSignup ? 'Create demo account' : 'Login'}
               <ArrowRight size={16} aria-hidden="true" />
             </button>
+            <p className="auth-demo-note">
+              Demo mode: any input, or no input, will continue. Nothing is sent to a server.
+            </p>
           </form>
 
         </div>

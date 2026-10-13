@@ -47,6 +47,7 @@ export function AnalyzePage({ activeTab, selectedResult, onTabChange, onAnalysis
   const hasError = Boolean(imageError || audioError);
   const canSubmit = hasInput && consented && !hasError && status !== 'loading';
   const provided = { text: Boolean(text.trim()), image: Boolean(imageFile), audio: Boolean(audioFile) };
+  const signalCount = Object.values(provided).filter(Boolean).length;
   const displayedResult = result || selectedResult;
 
   function handleReset() {
@@ -74,7 +75,13 @@ export function AnalyzePage({ activeTab, selectedResult, onTabChange, onAnalysis
       audio: audioFile || undefined,
     });
     if (entry) {
-      onAnalysisComplete?.({ id: Date.now(), timestamp: new Date().toLocaleTimeString(), result: entry, provided });
+      onAnalysisComplete?.({
+        id: Date.now(),
+        requestId: entry.requestId || null,
+        timestamp: new Date().toLocaleTimeString(),
+        result: entry,
+        provided,
+      });
       onTabChange('analysis');
     }
   }
@@ -83,7 +90,7 @@ export function AnalyzePage({ activeTab, selectedResult, onTabChange, onAnalysis
     <main id="main-content" className="workspace-page">
       <div className="workspace-heading">
         <div>
-          <span className="workspace-kicker">EMOTIONIQ WORKSPACE</span>
+          <span className="workspace-kicker">BRAINIACCONVO WORKSPACE</span>
           <h1>{isResultsTab ? 'Analysis results' : content.label}</h1>
           <p>{isResultsTab ? 'Review the latest estimate across the signals you provided.' : content.description}</p>
         </div>
@@ -111,6 +118,13 @@ export function AnalyzePage({ activeTab, selectedResult, onTabChange, onAnalysis
             </div>
           </div>
 
+          {activeTab === 'multimodal' && (
+            <div className="multi-signal-summary" role="status" aria-live="polite">
+              <span className="multi-signal-count">{signalCount} / 3</span>
+              <span>{signalCount === 0 ? 'Choose any signal to begin.' : `${signalCount} signal${signalCount === 1 ? '' : 's'} ready. Missing signals will be skipped.`}</span>
+            </div>
+          )}
+
           <div className={activeTab === 'multimodal' ? 'modality-inputs modality-inputs--multi' : 'modality-inputs'}>
             {(activeTab === 'text' || activeTab === 'multimodal') && <TextInput value={text} onChange={setText} />}
             {(activeTab === 'image' || activeTab === 'multimodal') && <ImageInput file={imageFile} onFile={setImageFile} onError={setImageError} />}
@@ -124,7 +138,7 @@ export function AnalyzePage({ activeTab, selectedResult, onTabChange, onAnalysis
             </div>
           )}
 
-          <ConsentNotice onConsent={setConsented} />
+          <ConsentNotice checked={consented} onConsent={setConsented} />
           <form onSubmit={handleSubmit} className="analysis-form">
             <button type="submit" className="analyze-btn" disabled={!canSubmit}>
               {status === 'loading' ? <><Loader2 size={16} className="spin" /> Analysing…</> : <><Sparkles size={16} /> Analyse {activeTab}</>}

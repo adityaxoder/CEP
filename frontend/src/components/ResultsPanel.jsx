@@ -12,11 +12,11 @@ export function ResultsPanel({ result, provided }) {
       <div className="section-card-header">
         <h2 className="section-card-title">Analysis Results</h2>
       </div>
-      <div className="section-card-body" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div className="section-card-body results-stack">
 
         {/* Disclaimer */}
         <div className="results-disclaimer" role="note">
-          <AlertTriangle size={13} aria-hidden="true" style={{ flexShrink: 0, marginTop: 1 }} />
+          <AlertTriangle size={13} className="notice-icon" aria-hidden="true" />
           These are <strong>estimates</strong> based on observable cues, not a
           diagnosis or proof of what someone truly feels.
         </div>
@@ -31,7 +31,7 @@ export function ResultsPanel({ result, provided }) {
         {/* Cue mismatch */}
         {mismatch?.detected && (
           <div className="mismatch-notice" role="alert">
-            <AlertTriangle size={15} aria-hidden="true" style={{ flexShrink: 0, marginTop: 1 }} />
+            <AlertTriangle size={15} className="notice-icon" aria-hidden="true" />
             <div>
               <p className="mismatch-title">Possible cue mismatch detected</p>
               <p className="mismatch-desc">{mismatch.description}</p>
@@ -42,7 +42,7 @@ export function ResultsPanel({ result, provided }) {
         {/* Communication suggestion */}
         {suggestion && (
           <div className="suggestion-box">
-            <Lightbulb size={15} aria-hidden="true" style={{ flexShrink: 0, marginTop: 1 }} />
+            <Lightbulb size={15} className="notice-icon" aria-hidden="true" />
             <div>
               <p className="suggestion-title">Communication suggestion</p>
               <p className="suggestion-text">{suggestion}</p>

@@ -1,5 +1,5 @@
 /**
- * EmotionIQ API Client
+ * BrainiacConvo API Client
  *
  * This module is the single point of contact between the frontend and the
  * backend analysis endpoints. All fetch calls live here so UI components

@@ -25,7 +25,10 @@ function App() {
     setSelectedResult(entry.result);
   }, []);
 
-  const clearHistory = useCallback(() => setHistory([]), []);
+  const clearHistory = useCallback(() => {
+    setHistory([]);
+    setSelectedResult(null);
+  }, []);
   const navigateTo = useCallback((page) => setCurrentPage(normalizePage(page)), []);
   const clearSelectedResult = useCallback(() => setSelectedResult(null), []);
   const signOut = useCallback(() => {
@@ -64,7 +67,7 @@ function App() {
 
       <footer className="app-footer" role="contentinfo">
         <p>
-          EmotionIQ — estimates based on observable cues only. Not a diagnosis.
+          BrainiacConvo — estimates based on observable cues only. Not a diagnosis.
         </p>
       </footer>
     </div>

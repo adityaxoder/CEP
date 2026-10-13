@@ -37,7 +37,7 @@ export function HistoryPage({ history, onClear }) {
       {history.length === 0 ? (
         <div className="history-empty">
           <Clock size={52} className="history-empty-icon" aria-hidden="true" />
-          <p style={{ fontWeight: 600, margin: 0 }}>No analyses yet this session</p>
+          <p className="history-empty-title">No analyses yet this session</p>
           <p className="history-empty-hint">
             Go to Analyse and submit some content to see results here.
           </p>
@@ -59,7 +59,7 @@ export function HistoryPage({ history, onClear }) {
             </button>
           </div>
 
-          <div className="section-card-body" style={{ paddingTop: 12 }}>
+          <div className="section-card-body history-card-body">
             <ol className="history-list" aria-label="Analysis history">
               {history.map((entry, idx) => {
                 const runNum   = history.length - idx;

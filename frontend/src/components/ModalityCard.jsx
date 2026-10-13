@@ -80,7 +80,7 @@ export function ModalityCard({ modality, data, missing }) {
       </div>
 
       {/* Big percentage + sparkline */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'space-between' }}>
+      <div className="modality-confidence-row">
         <p
           className="modality-pct"
           role="meter"
@@ -109,7 +109,7 @@ export function ModalityCard({ modality, data, missing }) {
       </div>
 
       {/* Label badge */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div className="modality-label-row">
         <span className={`modality-label-badge ${badgeClass}`}>{data.label}</span>
         <span className="confidence-label">{confidenceNote}</span>
       </div>
