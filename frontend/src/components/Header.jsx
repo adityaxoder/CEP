@@ -2,15 +2,17 @@
  * Header – top navigation bar.
  * Design matches the reference: brand | tab nav | action buttons
  */
-import { Brain } from 'lucide-react';
+import { Brain, LogOut, Settings } from 'lucide-react';
 
-export function Header({ currentPage, onNavigate }) {
+export function Header({ currentPage, onNavigate, onLogout }) {
   const navItems = [
     { id: 'text', label: 'Text' },
     { id: 'image', label: 'Image' },
     { id: 'voice', label: 'Voice' },
     { id: 'multimodal', label: 'Multimodal' },
     { id: 'analysis', label: 'Analysis' },
+    { id: 'history', label: 'History' },
+    { id: 'settings', label: 'Settings' },
   ];
 
   return (
@@ -20,7 +22,7 @@ export function Header({ currentPage, onNavigate }) {
         <button
           type="button"
           className="brand"
-          onClick={() => onNavigate('analyze')}
+          onClick={() => onNavigate('text')}
           aria-label="EmotionIQ home"
         >
           <span className="brand-icon" aria-hidden="true">
@@ -39,13 +41,21 @@ export function Header({ currentPage, onNavigate }) {
                   className={`nav-link ${currentPage === id ? 'nav-link--active' : ''}`}
                   onClick={() => onNavigate(id)}
                   aria-current={currentPage === id ? 'page' : undefined}
-                >
+                  >
+                  {id === 'settings' && <Settings size={14} aria-hidden="true" />}
                   {label}
                 </button>
               </li>
             ))}
           </ul>
         </nav>
+
+        <div className="header-actions">
+          <button type="button" className="btn-ghost header-logout" onClick={onLogout}>
+            <LogOut size={14} aria-hidden="true" />
+            Logout
+          </button>
+        </div>
 
       </div>
     </header>

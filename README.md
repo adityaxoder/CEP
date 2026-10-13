@@ -43,6 +43,8 @@ People can communicate different signals through their words, facial expressions
 
 ## Run the frontend locally
 
+The detailed, numbered UI implementation checklist is available in [UI_IMPLEMENTATION_PLAN.md](UI_IMPLEMENTATION_PLAN.md). Each task is scoped to be completed independently. Browser review is manual: the development agent must not automatically open or inspect the running URL; the project owner should follow each task's manual test checklist.
+
 The current repository contains the React + Vite frontend in `frontend/`.
 
 ```bash

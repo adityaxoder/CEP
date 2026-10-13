@@ -35,7 +35,41 @@
  * ────────────────────────────────────────────────────────────────────────────
  */
 
-const BASE_URL = null; // ← backend teammate: set this to your server URL
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || null;
+const USE_MOCK = import.meta.env.VITE_USE_MOCK_ANALYSIS !== 'false';
+
+function createMockResult({ text, image, audio }) {
+  const modalities = {
+    text: text ? {
+      label: 'Calm',
+      confidence: 0.82,
+      explanation: 'The wording uses measured language with a constructive tone.',
+    } : null,
+    image: image ? {
+      label: 'Positive',
+      confidence: 0.68,
+      explanation: 'Visible facial cues appear mildly positive in this prototype result.',
+    } : null,
+    audio: audio ? {
+      label: 'Neutral',
+      confidence: 0.59,
+      explanation: 'The vocal delivery appears steady with limited emphasis.',
+    } : null,
+  };
+
+  const available = Object.values(modalities).filter(Boolean);
+  const mismatch = available.length > 1 && new Set(available.map(({ label }) => label)).size > 1;
+
+  return {
+    requestId: `mock-${Date.now()}`,
+    modalities,
+    mismatch: mismatch ? {
+      detected: true,
+      description: 'The provided signals suggest slightly different emotional cues.',
+    } : { detected: false, description: '' },
+    suggestion: mismatch ? 'Consider clarifying the intended tone with a short, direct message.' : null,
+  };
+}
 
 /**
  * Sends text / image / audio to the backend analysis endpoint.
@@ -45,6 +79,14 @@ const BASE_URL = null; // ← backend teammate: set this to your server URL
  * @throws {Error} with a user-friendly message
  */
 export async function analyzeContent({ text, image, audio }) {
+  if (USE_MOCK) {
+    await new Promise((resolve) => setTimeout(resolve, 900));
+    if (text?.toLowerCase().includes('[error]')) {
+      throw new Error('The mock service could not process this sample. Remove [error] and try again.');
+    }
+    return createMockResult({ text, image, audio });
+  }
+
   if (!BASE_URL) {
     // Backend not connected yet – return a sentinel so the UI shows the
     // "not connected" state rather than a generic error.

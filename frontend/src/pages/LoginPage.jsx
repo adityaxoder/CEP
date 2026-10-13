@@ -40,7 +40,7 @@ export function LoginPage({ onLogin }) {
           <div className="auth-heading">
             {isSignup && <span className="auth-kicker">GET STARTED</span>}
             <h2>{isSignup ? 'Create your workspace' : 'Sign in to continue'}</h2>
-            <p>{isSignup ? 'Use any placeholder details for this demo.' : 'Use the form below to continue.'}</p>
+            <p>{isSignup ? 'Create a local demo workspace. No account is sent anywhere.' : 'Continue to a local demo workspace.'}</p>
           </div>
 
           <div className="auth-mode-tabs" role="tablist" aria-label="Account access">
@@ -63,7 +63,7 @@ export function LoginPage({ onLogin }) {
               <span>Email</span>
               <span className="auth-input-wrap">
                 <Mail size={16} aria-hidden="true" />
-                <input type="text" name="email" placeholder="you@example.com" autoComplete="email" />
+                <input type="text" name="email" placeholder="Enter anything" autoComplete="email" />
               </span>
             </label>
 
@@ -71,7 +71,7 @@ export function LoginPage({ onLogin }) {
               <span>Password</span>
               <span className="auth-input-wrap">
                 <LockKeyhole size={16} aria-hidden="true" />
-                <input type="text" name="password" placeholder="Enter any password" autoComplete={isSignup ? 'new-password' : 'current-password'} />
+                <input type="text" name="password" placeholder="Enter anything" autoComplete={isSignup ? 'new-password' : 'current-password'} />
               </span>
             </label>
 
@@ -80,7 +80,7 @@ export function LoginPage({ onLogin }) {
                 <span>Confirm password</span>
                 <span className="auth-input-wrap">
                   <LockKeyhole size={16} aria-hidden="true" />
-                  <input type="text" name="confirmPassword" placeholder="Repeat any password" autoComplete="new-password" />
+                  <input type="text" name="confirmPassword" placeholder="Enter anything" autoComplete="new-password" />
                 </span>
               </label>
             )}

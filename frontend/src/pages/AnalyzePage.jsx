@@ -30,13 +30,14 @@ const TAB_CONTENT = {
   },
 };
 
-export function AnalyzePage({ activeTab, onTabChange, onAnalysisComplete }) {
+export function AnalyzePage({ activeTab, selectedResult, onTabChange, onAnalysisComplete, onResultReset }) {
   const [text, setText] = useState('');
   const [imageFile, setImageFile] = useState(null);
   const [audioFile, setAudioFile] = useState(null);
   const [imageError, setImageError] = useState('');
   const [audioError, setAudioError] = useState('');
   const [consented, setConsented] = useState(false);
+  const [lastPayload, setLastPayload] = useState(null);
   const { status, result, errorMsg, analyze, reset } = useAnalysis();
 
   const isResultsTab = activeTab === 'analysis';
@@ -46,6 +47,7 @@ export function AnalyzePage({ activeTab, onTabChange, onAnalysisComplete }) {
   const hasError = Boolean(imageError || audioError);
   const canSubmit = hasInput && consented && !hasError && status !== 'loading';
   const provided = { text: Boolean(text.trim()), image: Boolean(imageFile), audio: Boolean(audioFile) };
+  const displayedResult = result || selectedResult;
 
   function handleReset() {
     setText('');
@@ -54,6 +56,7 @@ export function AnalyzePage({ activeTab, onTabChange, onAnalysisComplete }) {
     setImageError('');
     setAudioError('');
     setConsented(false);
+    onResultReset?.();
     reset();
   }
 
@@ -61,6 +64,11 @@ export function AnalyzePage({ activeTab, onTabChange, onAnalysisComplete }) {
     event.preventDefault();
     if (!canSubmit) return;
     const entry = await analyze({
+      text: text.trim() || undefined,
+      image: imageFile || undefined,
+      audio: audioFile || undefined,
+    });
+    setLastPayload({
       text: text.trim() || undefined,
       image: imageFile || undefined,
       audio: audioFile || undefined,
@@ -83,8 +91,8 @@ export function AnalyzePage({ activeTab, onTabChange, onAnalysisComplete }) {
       </div>
 
       {isResultsTab ? (
-        result ? (
-          <ResultsPanel result={result} provided={provided} />
+        displayedResult ? (
+          <ResultsPanel result={displayedResult} provided={provided} />
         ) : (
           <section className="empty-analysis section-card">
             <div className="empty-analysis-icon"><Sparkles size={22} /></div>
@@ -123,12 +131,17 @@ export function AnalyzePage({ activeTab, onTabChange, onAnalysisComplete }) {
             </button>
             {status !== 'idle' && <button type="button" className="reset-btn" onClick={handleReset}><RotateCcw size={14} /> Reset</button>}
           </form>
+          {!canSubmit && status === 'idle' && (
+            <p className="submit-hint" role="status">
+              {!hasInput ? 'Add at least one signal to continue.' : !consented ? 'Confirm the estimate notice to continue.' : 'Fix the file issue before analysing.'}
+            </p>
+          )}
         </section>
       )}
 
       {!isResultsTab && status === 'loading' && <div className="status-panel status-panel--loading"><Loader2 size={27} className="spin" /><p>Analysing your content…</p></div>}
       {!isResultsTab && status === 'not-connected' && <div className="status-panel status-panel--warn"><WifiOff size={27} /><p className="status-title">Analysis is not connected yet</p><p className="status-body">The backend endpoint has not been configured yet.</p></div>}
-      {!isResultsTab && status === 'error' && <div className="status-panel status-panel--error"><AlertCircle size={27} /><p className="status-title">Analysis failed</p><p className="status-body">{errorMsg}</p></div>}
+      {!isResultsTab && status === 'error' && <div className="status-panel status-panel--error"><AlertCircle size={27} /><p className="status-title">Analysis failed</p><p className="status-body">{errorMsg}</p><button type="button" className="btn-ghost" onClick={() => analyze(lastPayload)}>Try again</button></div>}
     </main>
   );
 }
