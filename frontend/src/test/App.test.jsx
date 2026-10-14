@@ -88,4 +88,21 @@ describe('application workflows', () => {
 
     expect(await screen.findByRole('button', { name: 'Login' })).toBeInTheDocument();
   });
+
+  it('supports the Coach tab, style selection, empty gating, and rewriting', async () => {
+    const user = userEvent.setup();
+    await enterWorkspace(user);
+    await user.click(screen.getByRole('button', { name: 'Coach' }));
+
+    const reframeButton = screen.getByRole('button', { name: /Reframe sentence/i });
+    expect(reframeButton).toBeDisabled();
+    await user.type(screen.getByLabelText('Your sentence'), 'Please send the report.');
+    expect(reframeButton).toBeEnabled();
+
+    await user.click(screen.getByDisplayValue('formal'));
+    await user.click(reframeButton);
+
+    expect(await screen.findByRole('heading', { name: 'Suggested wording' })).toBeInTheDocument();
+    expect(screen.getByText(/please be advised/i)).toBeInTheDocument();
+  });
 });

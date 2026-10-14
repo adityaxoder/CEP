@@ -5,7 +5,7 @@ import { AlertTriangle, Lightbulb, RotateCcw } from 'lucide-react';
 import { ModalityCard } from './ModalityCard';
 
 export function ResultsPanel({ result, provided, onStartNew }) {
-  const { modalities = {}, mismatch, suggestion } = result;
+  const { modalities = {}, mismatch, suggestion, summary, improvement } = result;
   const providedModalities = ['text', 'image', 'audio'].filter((modality) => provided?.[modality]);
   const signalLabel = `${providedModalities.length} signal${providedModalities.length === 1 ? '' : 's'} analysed`;
   const requestLabel = result.requestId || 'Request ID unavailable';
@@ -34,6 +34,23 @@ export function ResultsPanel({ result, provided, onStartNew }) {
           <ModalityCard modality="image" data={modalities.image} missing={!provided.image} />
           <ModalityCard modality="audio" data={modalities.audio} missing={!provided.audio} />
         </div>
+
+        {(summary || improvement) && (
+          <div className="results-insight-grid">
+            {summary && (
+              <div className="results-insight">
+                <p className="results-insight-title">Conversation tone summary</p>
+                <p className="results-insight-text">{summary}</p>
+              </div>
+            )}
+            {improvement && (
+              <div className="results-insight results-insight--improvement">
+                <p className="results-insight-title">What could be clearer</p>
+                <p className="results-insight-text">{improvement}</p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Cue mismatch */}
         {mismatch?.detected && (

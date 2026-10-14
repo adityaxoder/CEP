@@ -6,6 +6,7 @@
 import { useState, useCallback } from 'react';
 import { Header }      from './components/Header';
 import { AnalyzePage } from './pages/AnalyzePage';
+import { CoachPage } from './pages/CoachPage';
 import { HistoryPage } from './pages/HistoryPage';
 import { LoginPage }   from './pages/LoginPage';
 import { SettingsPage } from './pages/SettingsPage';
@@ -52,6 +53,8 @@ function App() {
           <HistoryPage history={history} onClear={clearHistory} onNavigate={navigateTo} />
         ) : currentPage === 'settings' ? (
           <SettingsPage historyCount={history.length} onClearHistory={clearHistory} onSignOut={signOut} />
+        ) : currentPage === 'coach' ? (
+          <CoachPage />
         ) : (
           <AnalyzePage
             activeTab={currentPage}

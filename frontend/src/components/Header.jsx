@@ -2,7 +2,7 @@
  * Header – top navigation bar.
  * Design matches the reference: brand | tab nav | action buttons
  */
-import { Activity, Clock, FileText, Image as ImageIcon, LogOut, Mic, Settings, Sparkles } from 'lucide-react';
+import { Activity, Clock, FileText, Image as ImageIcon, LogOut, Mic, Settings, Sparkles, WandSparkles } from 'lucide-react';
 
 export function Header({ currentPage, onNavigate, onLogout }) {
   const navItems = [
@@ -10,6 +10,7 @@ export function Header({ currentPage, onNavigate, onLogout }) {
     { id: 'image', label: 'Image', icon: ImageIcon },
     { id: 'voice', label: 'Voice', icon: Mic },
     { id: 'multimodal', label: 'Multimodal', icon: Sparkles },
+    { id: 'coach', label: 'Coach', icon: WandSparkles },
     { id: 'analysis', label: 'Analysis', icon: Activity },
     { id: 'history', label: 'History', icon: Clock },
     { id: 'settings', label: 'Settings', icon: Settings },

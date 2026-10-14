@@ -57,6 +57,7 @@ frontend/
     │
     └── pages/
         ├── AnalyzePage.jsx        # Main analysis page
+      ├── CoachPage.jsx          # Sentence reframing by selected delivery style
         └── HistoryPage.jsx        # Session-only history (no persistence)
 ```
 
@@ -64,7 +65,7 @@ frontend/
 
 ## Backend integration
 
-**The analysis endpoint is not connected yet.**
+**The analysis and Coach endpoints are not connected yet.**
 
 All integration work is isolated to **`src/api/emotionClient.js`**.
 Set `BASE_URL` to the server origin to connect.
@@ -102,6 +103,17 @@ Set `BASE_URL` to the server origin to connect.
 
 5. **Rate limit / quota** details — document so the UI can surface a friendly message.
 
+6. **`POST /coach`** endpoint accepting JSON:
+
+   ```json
+   {
+     "text": "Please send the report.",
+     "style": "formal"
+   }
+   ```
+
+   Return `requestId`, `originalText`, `style`, `reframedText`, and `explanation`.
+
 ---
 
 ## Screens implemented
@@ -109,6 +121,7 @@ Set `BASE_URL` to the server origin to connect.
 | Screen | Description |
 |---|---|
 | **Analyse** | Text, Image, Voice inputs; consent notice; all status states |
+| **Coach** | Reframe one sentence as Light, Strict, Happy, Sad, Formal, or Informal |
 | **History** | Session-only list of analyses (cleared on page refresh) |
 
 ### Status states on the Analyse page

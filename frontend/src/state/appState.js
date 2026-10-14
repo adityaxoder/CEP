@@ -3,6 +3,7 @@ export const PAGE_IDS = Object.freeze([
   'image',
   'voice',
   'multimodal',
+  'coach',
   'analysis',
   'history',
   'settings',

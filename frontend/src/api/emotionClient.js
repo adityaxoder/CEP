@@ -74,6 +74,23 @@ function getTextResult(text) {
   };
 }
 
+function getTextSummary(text, result) {
+  const wordCount = text.trim().split(/\s+/).length;
+  return `This ${wordCount}-word message is estimated to sound ${result.label.toLowerCase()}, based on its observable wording cues.`;
+}
+
+function getTextImprovement(text, result) {
+  if (result.label === 'Concerned') {
+    return 'Name the specific issue and the next action you need so the concern is easier to respond to.';
+  }
+
+  if (result.label === 'Warm') {
+    return 'Keep the appreciation, then add a direct request or clear next step if you need action.';
+  }
+
+  return 'For a clearer message, add the intended outcome or deadline while keeping the measured tone.';
+}
+
 function getMockFileCue(file) {
   const fileName = file.name.toLowerCase();
 
@@ -164,12 +181,15 @@ function normalizeAnalysisResult(data) {
     },
     mismatch: data?.mismatch || null,
     suggestion: data?.suggestion || null,
+    summary: data?.summary || null,
+    improvement: data?.improvement || null,
   };
 }
 
 function createMockResult({ text, image, audio }) {
+  const textResult = text ? getTextResult(text) : null;
   const modalities = {
-    text: text ? getTextResult(text) : null,
+    text: textResult,
     image: image ? getImageResult(image) : null,
     audio: audio ? getAudioResult(audio) : null,
   };
@@ -190,7 +210,45 @@ function createMockResult({ text, image, audio }) {
     suggestion: mismatch
       ? 'Consider checking the surrounding context or asking a clarifying question rather than relying on this estimate alone.'
       : null,
+    summary: textResult ? getTextSummary(text, textResult) : null,
+    improvement: textResult ? getTextImprovement(text, textResult) : null,
   };
+}
+
+function normalizeCoachResult(data) {
+  return {
+    requestId: data?.requestId || createRequestId('coach'),
+    originalText: data?.originalText || '',
+    style: data?.style || 'light',
+    reframedText: data?.reframedText || '',
+    explanation: data?.explanation || 'This is an optional wording estimate. Review it before sending.',
+  };
+}
+
+function lowerFirst(text) {
+  return text.charAt(0).toLowerCase() + text.slice(1);
+}
+
+function createMockCoachResult({ text, style }) {
+  const originalText = text.trim();
+  const core = originalText.replace(/[.!?]+$/, '');
+  const subject = lowerFirst(core);
+  const reframes = {
+    light: `Just a quick note: ${subject} when you have a moment.`,
+    strict: `Please ${subject} promptly.`,
+    happy: `I'd be happy to help with this: ${subject}!`,
+    sad: `I'm feeling a little discouraged about this: ${subject}.`,
+    formal: `Please be advised that ${subject}. Your attention to this matter would be appreciated.`,
+    informal: `Hey, can we ${subject}?`,
+  };
+
+  return normalizeCoachResult({
+    requestId: createRequestId('mock-coach'),
+    originalText,
+    style,
+    reframedText: reframes[style] || reframes.light,
+    explanation: `The sentence was adjusted toward a ${style} delivery while keeping the original intent as closely as possible.`,
+  });
 }
 
 /**
@@ -236,6 +294,37 @@ export async function analyzeContent({ text, image, audio }) {
   }
 
   return normalizeAnalysisResult(await response.json());
+}
+
+export async function coachText({ text, style }) {
+  if (!text?.trim()) {
+    throw new Error('Enter a sentence before using the conversation coach.');
+  }
+
+  if (USE_MOCK) {
+    await new Promise((resolve) => setTimeout(resolve, MOCK_DELAY_MS));
+    if (text.toLowerCase().includes('[error]')) {
+      throw new Error('The mock coach could not process this sentence. Remove [error] and try again.');
+    }
+    return createMockCoachResult({ text, style });
+  }
+
+  if (!BASE_URL) {
+    throw new NotConnectedError();
+  }
+
+  const response = await fetch(`${BASE_URL}/coach`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text: text.trim(), style }),
+  });
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => response.statusText);
+    throw new Error(`Coach request failed (${response.status}): ${detail}`);
+  }
+
+  return normalizeCoachResult(await response.json());
 }
 
 /** Sentinel error thrown when BASE_URL is not configured. */

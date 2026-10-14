@@ -109,8 +109,9 @@ The frontend is demonstrable without a backend and includes:
 
 - Local demo login and signup screens. No account is stored remotely.
 - Text, Image, Voice, and Multimodal analysis inputs.
+- Conversation Coach for reframing one sentence as Light, Strict, Happy, Sad, Formal, or Informal.
 - Consent messaging, file validation, previews, loading, error, retry, and reset states.
-- Results with modality labels, confidence, explanations, possible cue mismatch, and optional communication suggestions.
+- Results with modality labels, confidence, explanations, text summaries, improvement guidance, possible cue mismatch, and optional communication suggestions.
 - Session-only History with timestamps, modality summaries, mismatch tags, and clear-history controls.
 - Privacy & settings with session-data controls and local demo sign-out.
 - Responsive layouts, keyboard navigation, and semantic accessibility support.
@@ -123,6 +124,7 @@ The frontend is demonstrable without a backend and includes:
 | `image` | Image analysis | Estimate visible cues from an uploaded image. |
 | `voice` | Voice analysis | Estimate vocal delivery from an uploaded recording. |
 | `multimodal` | Multimodal analysis | Combine any available text, image, and voice inputs. |
+| `coach` | Conversation Coach | Reframe one sentence for a selected delivery style. |
 | `analysis` | Analysis results | Review the latest estimate and modality details. |
 | `history` | Observations History | Review successful analyses from the current session. |
 | `settings` | Privacy & settings | Review privacy messaging, clear history, or sign out. |
@@ -134,6 +136,8 @@ Mock mode is enabled unless `VITE_USE_MOCK_ANALYSIS` is set to `false`. It waits
 To demonstrate a readable failure, include `[error]` anywhere in the text input. The mock request fails, the submitted payload remains available for retry, and failed requests are not added to History. Remove `[error]` or use Reset before submitting a successful sample.
 
 Mock image and voice estimates use demo filename cues such as `happy`, `smile`, `worried`, or `serious`; they are not real image or audio model predictions.
+
+The Coach mock supports `light`, `strict`, `happy`, `sad`, `formal`, and `informal` styles. Include `[error]` in the Coach sentence to demonstrate its failure and retry state.
 
 ### Environment variables
 
@@ -174,6 +178,8 @@ Expose `POST /analyze` with `multipart/form-data`. All fields are optional, but 
 		"image": null,
 		"audio": null
 	},
+	"summary": "This 5-word message is estimated to sound calm, based on its observable wording cues.",
+	"improvement": "For a clearer message, add the intended outcome or deadline while keeping the measured tone.",
 	"mismatch": {
 		"detected": false,
 		"description": ""
@@ -185,6 +191,31 @@ Expose `POST /analyze` with `multipart/form-data`. All fields are optional, but 
 `confidence` must be a number from `0` to `1`. Always return `modalities.text`, `modalities.image`, and `modalities.audio`; use `null` for an unprovided or unavailable modality. `mismatch` may be `null`, but when present it must include `detected` and a non-diagnostic `description`. `suggestion` is optional and should be `null` when there is no useful communication guidance.
 
 The frontend currently sends requests and handles responses in `frontend/src/api/emotionClient.js`. Add authentication headers and backend-specific error or quota handling there once the API contract is finalized.
+
+### Conversation Coach endpoint
+
+The Coach page sends `POST /coach` with a JSON body:
+
+```json
+{
+	"text": "Please send the report.",
+	"style": "formal"
+}
+```
+
+The backend should return:
+
+```json
+{
+	"requestId": "uuid",
+	"originalText": "Please send the report.",
+	"style": "formal",
+	"reframedText": "Please be advised that the report is requested. Your attention to this matter would be appreciated.",
+	"explanation": "The sentence was adjusted toward a formal delivery while keeping the original intent as closely as possible."
+}
+```
+
+`style` should accept `light`, `strict`, `happy`, `sad`, `formal`, or `informal`. Coach output is optional wording guidance, not a replacement for the user's judgment.
 
 ## Scope and limitations
 
@@ -198,7 +229,7 @@ The frontend is ready for the backend phase. Backend integration can begin by re
 
 Automated verification completed:
 
-- `npm test` — 11 focused tests pass across login, consent, validation, mock results, retry, history, and sign-out flows.
+- `npm test` — 14 focused tests pass across login, consent, validation, mock results, Coach rewriting, retry, history, and sign-out flows.
 - `npm run lint` — passes with no unused-code findings.
 - `npm run build` — production build passes.
 - Editor diagnostics and `git diff --check` — clean.
