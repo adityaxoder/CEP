@@ -1,10 +1,9 @@
 /**
- * HistoryPage – session-only history matching the reference's
- * "P14 / P15 / P16" item list style with inline mini bar charts and tag pills.
+ * HistoryPage – session-only history with modality summaries and status tags.
  *
  * No persistence — clears when the tab is closed/refreshed.
  */
-import { Clock, Info, Trash2 } from 'lucide-react';
+import { ArrowRight, Clock, Info, Trash2 } from 'lucide-react';
 
 /* Pseudo-random bar heights for mini chart decoration */
 function getMiniBarHeights(seed) {
@@ -16,7 +15,13 @@ function getMiniBarHeights(seed) {
 
 const LABELS = { text: 'Text', image: 'Image', audio: 'Voice' };
 
-export function HistoryPage({ history, onClear }) {
+function getConfidencePercent(confidence) {
+  const value = Number(confidence);
+  if (!Number.isFinite(value)) return 0;
+  return Math.round(Math.min(1, Math.max(0, value)) * 100);
+}
+
+export function HistoryPage({ history, onClear, onNavigate }) {
   return (
     <main id="main-content" className="history-page">
       <div className="page-intro">
@@ -41,6 +46,9 @@ export function HistoryPage({ history, onClear }) {
           <p className="history-empty-hint">
             Go to Analyse and submit some content to see results here.
           </p>
+          <button type="button" className="btn-primary" onClick={() => onNavigate?.('multimodal')}>
+            <ArrowRight size={14} aria-hidden="true" /> Start an analysis
+          </button>
         </div>
       ) : (
         <div className="section-card">
@@ -71,7 +79,7 @@ export function HistoryPage({ history, onClear }) {
                   .filter((m) => entry.provided[m] && entry.result?.modalities?.[m])
                   .map((m) => {
                     const d = entry.result.modalities[m];
-                    return `${LABELS[m]}: ${d.label} (${Math.round((d.confidence ?? 0) * 100)}%)`;
+                    return `${LABELS[m]}: ${d.label} (${getConfidencePercent(d.confidence)}%)`;
                   })
                   .join(' · ') || 'No results';
 
@@ -80,7 +88,7 @@ export function HistoryPage({ history, onClear }) {
                     {/* Left text */}
                     <div className="history-item-left">
                       <p className="history-item-id">P{String(runNum).padStart(2, '0')}</p>
-                      <p className="history-item-desc">{modalitySummary}</p>
+                      <p className="history-item-desc" title={modalitySummary}>{modalitySummary}</p>
                       <span className="history-item-time">Today at {entry.timestamp}</span>
                     </div>
 

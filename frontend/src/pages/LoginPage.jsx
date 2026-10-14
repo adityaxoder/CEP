@@ -24,8 +24,8 @@ export function LoginPage({ onLogin }) {
         </div>
 
         <div className="auth-visual-footer">
-          <span><Check size={14} /> Private by default</span>
-          <span><Check size={14} /> Estimates, not diagnoses</span>
+          <span><Check size={14} aria-hidden="true" /> Private by default</span>
+          <span><Check size={14} aria-hidden="true" /> Estimates, not diagnoses</span>
         </div>
       </section>
 
@@ -37,7 +37,7 @@ export function LoginPage({ onLogin }) {
 
           <div className="auth-heading">
             {isSignup && <span className="auth-kicker">GET STARTED</span>}
-            <h2>{isSignup ? 'Create your workspace' : 'Sign in to continue'}</h2>
+            <h1>{isSignup ? 'Create your workspace' : 'Sign in to continue'}</h1>
             <p>{isSignup ? 'Set up your workspace to begin.' : 'Enter the workspace to begin.'}</p>
           </div>
 
@@ -52,33 +52,33 @@ export function LoginPage({ onLogin }) {
                 <span>Name</span>
                 <span className="auth-input-wrap">
                   <UserRound size={16} aria-hidden="true" />
-                  <input type="text" name="name" placeholder="Your name" autoComplete="name" />
+                  <input id="name-input" type="text" name="name" placeholder="Your name" autoComplete="name" />
                 </span>
               </label>
             )}
 
-            <label className="auth-field">
+            <label className="auth-field" htmlFor="email-input">
               <span>Email</span>
               <span className="auth-input-wrap">
                 <Mail size={16} aria-hidden="true" />
-                <input type="text" name="email" placeholder="Enter anything" autoComplete="email" />
+                <input id="email-input" type="email" name="email" placeholder="Enter anything" autoComplete="email" />
               </span>
             </label>
 
-            <label className="auth-field">
+            <label className="auth-field" htmlFor="password-input">
               <span>Password</span>
               <span className="auth-input-wrap">
                 <LockKeyhole size={16} aria-hidden="true" />
-                <input type="password" name="password" placeholder="Enter anything" autoComplete={isSignup ? 'new-password' : 'current-password'} />
+                <input id="password-input" type="password" name="password" placeholder="Enter anything" autoComplete={isSignup ? 'new-password' : 'current-password'} />
               </span>
             </label>
 
             {isSignup && (
-              <label className="auth-field">
+              <label className="auth-field" htmlFor="confirm-password-input">
                 <span>Confirm password</span>
                 <span className="auth-input-wrap">
                   <LockKeyhole size={16} aria-hidden="true" />
-                  <input type="text" name="confirmPassword" placeholder="Enter anything" autoComplete="new-password" />
+                  <input id="confirm-password-input" type="password" name="confirmPassword" placeholder="Enter anything" autoComplete="new-password" />
                 </span>
               </label>
             )}

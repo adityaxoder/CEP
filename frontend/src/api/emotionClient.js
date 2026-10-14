@@ -74,6 +74,86 @@ function getTextResult(text) {
   };
 }
 
+function getMockFileCue(file) {
+  const fileName = file.name.toLowerCase();
+
+  if (/\b(worried|concerned|sad|frown|serious|issue)\b/.test(fileName)) return 'concerned';
+  if (/\b(happy|smile|laugh|joy|positive|excited)\b/.test(fileName)) return 'positive';
+  return 'neutral';
+}
+
+function getImageResult(image) {
+  const cue = getMockFileCue(image);
+
+  if (cue === 'concerned') {
+    return {
+      label: 'Concerned visible cues',
+      confidence: 0.74,
+      explanation: 'The image filename suggests a serious or concerned sample; this estimate is not a claim about the person\'s internal state.',
+    };
+  }
+
+  if (cue === 'positive') {
+    return {
+      label: 'Positive visible cues',
+      confidence: 0.81,
+      explanation: 'The image filename suggests a smiling or positive sample; this estimate is based on the provided demo cue only.',
+    };
+  }
+
+  return {
+    label: 'Neutral visible cues',
+    confidence: 0.63,
+    explanation: 'No strong visible cue is represented by this demo sample, so the estimate is neutral and uncertain.',
+  };
+}
+
+function getAudioResult(audio) {
+  const cue = getMockFileCue(audio);
+
+  if (cue === 'concerned') {
+    return {
+      label: 'Concerned delivery',
+      confidence: 0.71,
+      explanation: 'The filename suggests a serious delivery sample; this estimate describes vocal presentation, not inner emotion.',
+    };
+  }
+
+  if (cue === 'positive') {
+    return {
+      label: 'Warm delivery',
+      confidence: 0.78,
+      explanation: 'The filename suggests a warm or upbeat delivery sample; this is an estimate of vocal style.',
+    };
+  }
+
+  return {
+    label: 'Steady delivery',
+    confidence: 0.6,
+    explanation: 'The vocal delivery appears steady with limited emphasis in this neutral demo sample.',
+  };
+}
+
+function getCueCategory(label) {
+  if (/concerned/i.test(label)) return 'concerned';
+  if (/positive|warm/i.test(label)) return 'positive';
+  return 'neutral';
+}
+
+const MOCK_MODALITY_NAMES = {
+  text: 'text wording',
+  image: 'visible image cues',
+  audio: 'voice delivery',
+};
+
+function getMismatchDescription(entries) {
+  const cueDescriptions = entries
+    .map(({ modality, data }) => `${MOCK_MODALITY_NAMES[modality]} appears ${getCueCategory(data.label)}`)
+    .join(', ');
+
+  return `The available estimates are not aligned: ${cueDescriptions}. This can reflect different observable signals and is not evidence of deception or hidden emotion.`;
+}
+
 function normalizeAnalysisResult(data) {
   return {
     requestId: data?.requestId || createRequestId('request'),
@@ -90,29 +170,26 @@ function normalizeAnalysisResult(data) {
 function createMockResult({ text, image, audio }) {
   const modalities = {
     text: text ? getTextResult(text) : null,
-    image: image ? {
-      label: 'Positive',
-      confidence: 0.68,
-      explanation: 'Visible facial cues appear mildly positive in this prototype result.',
-    } : null,
-    audio: audio ? {
-      label: 'Neutral',
-      confidence: 0.59,
-      explanation: 'The vocal delivery appears steady with limited emphasis.',
-    } : null,
+    image: image ? getImageResult(image) : null,
+    audio: audio ? getAudioResult(audio) : null,
   };
 
-  const available = Object.values(modalities).filter(Boolean);
-  const mismatch = available.length > 1 && new Set(available.map(({ label }) => label)).size > 1;
+  const available = Object.entries(modalities)
+    .filter(([, data]) => data)
+    .map(([modality, data]) => ({ modality, data }));
+  const mismatch = available.length > 1
+    && new Set(available.map(({ data }) => getCueCategory(data.label))).size > 1;
 
   return {
     requestId: createRequestId('mock'),
     modalities,
     mismatch: mismatch ? {
       detected: true,
-      description: 'The provided signals suggest slightly different emotional cues.',
+      description: getMismatchDescription(available),
     } : { detected: false, description: '' },
-    suggestion: mismatch ? 'Consider clarifying the intended tone with a short, direct message.' : null,
+    suggestion: mismatch
+      ? 'Consider checking the surrounding context or asking a clarifying question rather than relying on this estimate alone.'
+      : null,
   };
 }
 

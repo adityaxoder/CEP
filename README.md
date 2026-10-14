@@ -58,10 +58,12 @@ Open http://localhost:5173. Other useful commands:
 ```bash
 npm run build
 npm run lint
+npm test
+npm run test:watch
 npm run preview
 ```
 
-The backend analysis endpoint is not connected yet. Backend integration is isolated in `frontend/src/api/emotionClient.js`; set its `BASE_URL` to the backend server origin when the FastAPI service is available.
+The Phase 1 UI is complete and runs in mock mode by default. Backend integration is isolated in `frontend/src/api/emotionClient.js`.
 
 ## Functional requirements
 
@@ -101,17 +103,107 @@ The first version uses modular late fusion: separate text, face, and voice model
 
 Candidate datasets and research foundations include GoEmotions for text, FER2013 for facial expressions, RAVDESS for emotional speech, and CMU-MOSEI for multimodal benchmarking. M3ER, CMU-MOSEI, and MISA are cited as research foundations. Final choices depend on licensing, compatibility, and available compute.
 
-## Current screens and backend contract
+## Phase 1 UI status
 
-The frontend currently provides an Analyse screen with text, image, and voice inputs, consent, loading/error states, and results, plus a session-only History screen. History is cleared on page refresh until persistence is implemented.
+The frontend is demonstrable without a backend and includes:
 
-The backend should expose `POST /analyze` using `multipart/form-data` with optional `text`, `image`, and `audio` fields. A response should contain modality results, mismatch information, and an optional suggestion. Unsupported or unprocessed modalities should be returned as `null`, not omitted.
+- Local demo login and signup screens. No account is stored remotely.
+- Text, Image, Voice, and Multimodal analysis inputs.
+- Consent messaging, file validation, previews, loading, error, retry, and reset states.
+- Results with modality labels, confidence, explanations, possible cue mismatch, and optional communication suggestions.
+- Session-only History with timestamps, modality summaries, mismatch tags, and clear-history controls.
+- Privacy & settings with session-data controls and local demo sign-out.
+- Responsive layouts, keyboard navigation, and semantic accessibility support.
+
+### Available screens
+
+| Page ID | Screen | Purpose |
+|---|---|---|
+| `text` | Text analysis | Estimate cues in typed wording. |
+| `image` | Image analysis | Estimate visible cues from an uploaded image. |
+| `voice` | Voice analysis | Estimate vocal delivery from an uploaded recording. |
+| `multimodal` | Multimodal analysis | Combine any available text, image, and voice inputs. |
+| `analysis` | Analysis results | Review the latest estimate and modality details. |
+| `history` | Observations History | Review successful analyses from the current session. |
+| `settings` | Privacy & settings | Review privacy messaging, clear history, or sign out. |
+
+### Mock mode
+
+Mock mode is enabled unless `VITE_USE_MOCK_ANALYSIS` is set to `false`. It waits briefly to make loading visible, returns the documented response shape, and keeps raw image/audio files in memory only while the current UI is using them. It does not upload or persist raw media.
+
+To demonstrate a readable failure, include `[error]` anywhere in the text input. The mock request fails, the submitted payload remains available for retry, and failed requests are not added to History. Remove `[error]` or use Reset before submitting a successful sample.
+
+Mock image and voice estimates use demo filename cues such as `happy`, `smile`, `worried`, or `serious`; they are not real image or audio model predictions.
+
+### Environment variables
+
+Create a `.env` file in `frontend/` when changing the defaults:
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `VITE_USE_MOCK_ANALYSIS` | enabled | Set to `false` to call the backend instead of the mock service. |
+| `VITE_API_BASE_URL` | empty | Backend origin used for `POST /analyze`, for example `http://localhost:8000`. |
+
+Restart Vite after changing environment variables. To disable mock mode, set both `VITE_USE_MOCK_ANALYSIS=false` and `VITE_API_BASE_URL` to a reachable backend origin. If mock mode is disabled without a base URL, the UI shows the not-connected state.
+
+## Backend handoff
+
+Replace the mock behavior behind `frontend/src/api/emotionClient.js`. Components already consume the response contract below, so the UI should not need to change when the FastAPI endpoint is connected.
+
+### Request
+
+Expose `POST /analyze` with `multipart/form-data`. All fields are optional, but at least one must be supplied by the client:
+
+| Field | Type | Constraints |
+|---|---|---|
+| `text` | string | Optional text input. |
+| `image` | File | Optional JPEG, PNG, or WEBP image up to 5 MB. |
+| `audio` | File | Optional MP3, WAV, OGG, or WEBM audio up to 10 MB. |
+
+### Response
+
+```json
+{
+	"requestId": "uuid",
+	"modalities": {
+		"text": {
+			"label": "Calm",
+			"confidence": 0.76,
+			"explanation": "Brief explanation based on observable wording cues."
+		},
+		"image": null,
+		"audio": null
+	},
+	"mismatch": {
+		"detected": false,
+		"description": ""
+	},
+	"suggestion": null
+}
+```
+
+`confidence` must be a number from `0` to `1`. Always return `modalities.text`, `modalities.image`, and `modalities.audio`; use `null` for an unprovided or unavailable modality. `mismatch` may be `null`, but when present it must include `detected` and a non-diagnostic `description`. `suggestion` is optional and should be `null` when there is no useful communication guidance.
+
+The frontend currently sends requests and handles responses in `frontend/src/api/emotionClient.js`. Add authentication headers and backend-specific error or quota handling there once the API contract is finalized.
 
 ## Scope and limitations
 
-The mini-project prioritizes a working web prototype with real model/API integration, explainable late fusion, contradiction flags, communication suggestions, and basic history/privacy controls. Accuracy may vary with datasets, accents, image quality, and recording conditions. Facial and vocal cues do not prove internal emotional states.
+The current UI is a mock-backed prototype. Image and voice demo results are filename-driven, authentication is local-only, and History is held in memory for the current browser session and cleared on refresh or sign-out. No trained emotion model or persistent backend is included in this frontend phase. Real model accuracy may vary with datasets, accents, image quality, and recording conditions. Facial and vocal cues do not prove internal emotional states.
 
 Training deep-learning models from scratch, real-time surveillance, diagnosis, analyzing other people without consent, and complex learned multimodal fusion are outside the first prototype.
+
+## Phase 1 UI complete
+
+The frontend is ready for the backend phase. Backend integration can begin by replacing the mock client behind the existing contract in `frontend/src/api/emotionClient.js`; the page components and results layout do not need to be redesigned.
+
+Automated verification completed:
+
+- `npm test` — 11 focused tests pass across login, consent, validation, mock results, retry, history, and sign-out flows.
+- `npm run lint` — passes with no unused-code findings.
+- `npm run build` — production build passes.
+- Editor diagnostics and `git diff --check` — clean.
+
+Before handoff, the project owner should manually review the running UI at desktop and mobile sizes, visit every page destination, inspect one-modality and multimodal results, exercise unavailable/error/retry states, and check the browser console. The documented mock mode remains the default demonstration path until the FastAPI service is available.
 
 ## Acceptance criteria
 

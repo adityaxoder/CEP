@@ -14,7 +14,7 @@ export function SettingsPage({ historyCount, onClearHistory, onSignOut }) {
         <section className="section-card" aria-labelledby="privacy-heading">
           <div className="section-card-header">
             <h2 id="privacy-heading" className="section-card-title">Privacy by default</h2>
-            <span className="settings-status"><Check size={13} /> Active</span>
+            <span className="settings-status"><Check size={13} aria-hidden="true" /> Active</span>
           </div>
           <div className="section-card-body settings-copy">
             <p>Analysis history stays in this browser session while the UI prototype is running. Raw images and audio are not uploaded in mock mode.</p>
@@ -33,6 +33,7 @@ export function SettingsPage({ historyCount, onClearHistory, onSignOut }) {
           </div>
           <div className="section-card-body settings-copy">
             <p>Clear your analysis results from this session at any time. This cannot be undone.</p>
+            {historyCount === 0 && <p className="settings-empty">No analyses are saved yet. Complete an analysis to see it listed here.</p>}
             <button type="button" className="clear-btn settings-action" onClick={onClearHistory} disabled={historyCount === 0}>
               <Trash2 size={14} aria-hidden="true" />
               Clear session history

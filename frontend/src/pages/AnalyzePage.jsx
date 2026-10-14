@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AlertCircle, FileText, Image as ImageIcon, Loader2, Mic, RotateCcw, Sparkles, WifiOff } from 'lucide-react';
+import { AlertCircle, FileText, Image as ImageIcon, Info, Loader2, Mic, RotateCcw, Sparkles, WifiOff } from 'lucide-react';
 import { TextInput } from '../components/TextInput';
 import { ImageInput } from '../components/ImageInput';
 import { VoiceInput } from '../components/VoiceInput';
@@ -49,6 +49,7 @@ export function AnalyzePage({ activeTab, selectedResult, onTabChange, onAnalysis
   const provided = { text: Boolean(text.trim()), image: Boolean(imageFile), audio: Boolean(audioFile) };
   const signalCount = Object.values(provided).filter(Boolean).length;
   const displayedResult = result || selectedResult;
+  const showReset = hasInput || hasError || consented || status !== 'idle';
   const submitHint = !hasInput
     ? 'Add at least one signal to continue.'
     : !consented
@@ -66,19 +67,21 @@ export function AnalyzePage({ activeTab, selectedResult, onTabChange, onAnalysis
     reset();
   }
 
+  function handleStartNew() {
+    handleReset();
+    onTabChange('multimodal');
+  }
+
   async function handleSubmit(event) {
     event.preventDefault();
     if (!canSubmit) return;
-    const entry = await analyze({
+    const payload = {
       text: text.trim() || undefined,
       image: imageFile || undefined,
       audio: audioFile || undefined,
-    });
-    setLastPayload({
-      text: text.trim() || undefined,
-      image: imageFile || undefined,
-      audio: audioFile || undefined,
-    });
+    };
+    setLastPayload(payload);
+    const entry = await analyze(payload);
     if (entry) {
       onAnalysisComplete?.({
         id: Date.now(),
@@ -89,6 +92,10 @@ export function AnalyzePage({ activeTab, selectedResult, onTabChange, onAnalysis
       });
       onTabChange('analysis');
     }
+  }
+
+  function handleRetry() {
+    if (lastPayload) analyze(lastPayload);
   }
 
   return (
@@ -104,7 +111,7 @@ export function AnalyzePage({ activeTab, selectedResult, onTabChange, onAnalysis
 
       {isResultsTab ? (
         displayedResult ? (
-          <ResultsPanel result={displayedResult} provided={provided} />
+          <ResultsPanel result={displayedResult} provided={provided} onStartNew={handleStartNew} />
         ) : (
           <section className="empty-analysis section-card">
             <div className="empty-analysis-icon"><Sparkles size={22} /></div>
@@ -126,7 +133,7 @@ export function AnalyzePage({ activeTab, selectedResult, onTabChange, onAnalysis
           {activeTab === 'multimodal' && (
             <div className="multi-signal-summary" role="status" aria-live="polite">
               <span className="multi-signal-count">{signalCount} / 3</span>
-              <span>{signalCount === 0 ? 'Choose any signal to begin.' : `${signalCount} signal${signalCount === 1 ? '' : 's'} ready. Missing signals will be skipped.`}</span>
+              <span>{signalCount === 0 ? 'Choose any signal to begin. Estimates will appear here after you submit.' : `${signalCount} signal${signalCount === 1 ? '' : 's'} ready. Missing signals will be skipped.`}</span>
             </div>
           )}
 
@@ -135,6 +142,19 @@ export function AnalyzePage({ activeTab, selectedResult, onTabChange, onAnalysis
             {(activeTab === 'image' || activeTab === 'multimodal') && <ImageInput file={imageFile} onFile={setImageFile} onError={setImageError} />}
             {(activeTab === 'voice' || activeTab === 'multimodal') && <VoiceInput file={audioFile} onFile={setAudioFile} onError={setAudioError} />}
           </div>
+
+          {signalCount === 0 && activeTab !== 'multimodal' && status === 'idle' && (
+            <div className="empty-input-guidance" role="status" aria-live="polite">
+              <Info size={14} aria-hidden="true" />
+              <span>
+                {activeTab === 'text'
+                  ? 'Enter a message to see an estimate of wording cues here.'
+                  : activeTab === 'image'
+                    ? 'Choose an image to see an estimate of visible cues here.'
+                    : 'Choose a recording to see an estimate of vocal delivery here.'}
+              </span>
+            </div>
+          )}
 
           {(imageError || audioError) && (
             <div className="file-errors" role="alert">
@@ -148,7 +168,7 @@ export function AnalyzePage({ activeTab, selectedResult, onTabChange, onAnalysis
             <button type="submit" className="analyze-btn" disabled={!canSubmit} aria-describedby={!canSubmit ? 'submit-hint' : undefined}>
               {status === 'loading' ? <><Loader2 size={16} className="spin" /> Analysing…</> : <><Sparkles size={16} /> Analyse {activeTab}</>}
             </button>
-            {status !== 'idle' && <button type="button" className="reset-btn" onClick={handleReset}><RotateCcw size={14} /> Reset</button>}
+            {showReset && <button type="button" className="reset-btn" onClick={handleReset}><RotateCcw size={14} /> Reset</button>}
           </form>
           {!canSubmit && status === 'idle' && <p id="submit-hint" className="submit-hint" role="status">{submitHint}</p>}
         </section>
@@ -164,8 +184,21 @@ export function AnalyzePage({ activeTab, selectedResult, onTabChange, onAnalysis
           <p className="status-body">Preparing your selected signals. Keep this window open.</p>
         </div>
       )}
-      {!isResultsTab && status === 'not-connected' && <div className="status-panel status-panel--warn"><WifiOff size={27} /><p className="status-title">Analysis is not connected yet</p><p className="status-body">The backend endpoint has not been configured yet.</p></div>}
-      {!isResultsTab && status === 'error' && <div className="status-panel status-panel--error"><AlertCircle size={27} /><p className="status-title">Analysis failed</p><p className="status-body">{errorMsg}</p><button type="button" className="btn-ghost" onClick={() => analyze(lastPayload)}>Try again</button></div>}
+      {!isResultsTab && status === 'not-connected' && (
+        <div className="status-panel status-panel--warn" role="status" aria-live="polite">
+          <WifiOff size={27} aria-hidden="true" />
+          <p className="status-title">Analysis is not connected yet</p>
+          <p className="status-body">The backend endpoint has not been configured yet.</p>
+        </div>
+      )}
+      {!isResultsTab && status === 'error' && (
+        <div className="status-panel status-panel--error" role="alert">
+          <AlertCircle size={27} aria-hidden="true" />
+          <p className="status-title">Analysis failed</p>
+          <p className="status-body">{errorMsg} Remove the error trigger or reset the form before trying again.</p>
+          <button type="button" className="btn-ghost" onClick={handleRetry} disabled={!lastPayload}>Try again</button>
+        </div>
+      )}
     </main>
   );
 }

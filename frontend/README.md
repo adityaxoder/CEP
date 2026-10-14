@@ -25,6 +25,8 @@ npm run dev
 
 The app is available at **http://localhost:5173**.
 
+Run the focused frontend tests with `npm test`, or use `npm run test:watch` while developing.
+
 ---
 
 ## Project structure
@@ -118,6 +120,10 @@ Set `BASE_URL` to the server origin to connect.
 | **Not connected** | `BASE_URL` is null in `emotionClient.js` |
 | **Error** | Backend returned a non-OK response |
 | **Success** | Results panel with per-modality cards |
+
+### Mock loading and failure demo
+
+Mock analysis waits briefly before returning a result so the loading state is visible. To demonstrate the error, include `[error]` anywhere in the text input. The mock service returns a readable failure, keeps the submitted payload available for **Try again**, and does not add the failed request to session history. Remove `[error]` or use **Reset** before submitting a successful sample.
 
 ---
 

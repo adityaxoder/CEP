@@ -1,9 +1,7 @@
 /**
  * App – root component.
  *
- * Owns:
- *   • currentPage  state ("analyze" | "history")
- *   • sessionHistory state – analysis runs for this tab only, no persistence
+ * Owns the current page, session-only analysis history, and selected result.
  */
 import { useState, useCallback } from 'react';
 import { Header }      from './components/Header';
@@ -51,7 +49,7 @@ function App() {
 
       <div className="page-wrapper">
         {currentPage === 'history' ? (
-          <HistoryPage history={history} onClear={clearHistory} />
+          <HistoryPage history={history} onClear={clearHistory} onNavigate={navigateTo} />
         ) : currentPage === 'settings' ? (
           <SettingsPage historyCount={history.length} onClearHistory={clearHistory} onSignOut={signOut} />
         ) : (

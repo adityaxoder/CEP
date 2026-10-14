@@ -1,16 +1,23 @@
 /**
  * ResultsPanel – renders the complete analysis result once status === 'success'.
  */
-import { AlertTriangle, Lightbulb } from 'lucide-react';
+import { AlertTriangle, Lightbulb, RotateCcw } from 'lucide-react';
 import { ModalityCard } from './ModalityCard';
 
-export function ResultsPanel({ result, provided }) {
+export function ResultsPanel({ result, provided, onStartNew }) {
   const { modalities = {}, mismatch, suggestion } = result;
+  const providedModalities = ['text', 'image', 'audio'].filter((modality) => provided?.[modality]);
+  const signalLabel = `${providedModalities.length} signal${providedModalities.length === 1 ? '' : 's'} analysed`;
+  const requestLabel = result.requestId || 'Request ID unavailable';
 
   return (
     <section className="results-panel section-card" aria-label="Analysis results">
       <div className="section-card-header">
         <h2 className="section-card-title">Analysis Results</h2>
+        <div className="results-context" aria-label={`Request ${requestLabel}; ${signalLabel}`}>
+          <span className="results-request-id" title={requestLabel}>Request {requestLabel}</span>
+          <span>{signalLabel}</span>
+        </div>
       </div>
       <div className="section-card-body results-stack">
 
@@ -49,6 +56,12 @@ export function ResultsPanel({ result, provided }) {
             </div>
           </div>
         )}
+
+        <div className="results-actions">
+          <button type="button" className="btn-primary" onClick={onStartNew}>
+            <RotateCcw size={14} aria-hidden="true" /> Start another analysis
+          </button>
+        </div>
       </div>
     </section>
   );
