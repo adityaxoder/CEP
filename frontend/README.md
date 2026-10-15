@@ -25,6 +25,8 @@ npm run dev
 
 The app is available at **http://localhost:5173**.
 
+Run the focused frontend tests with `npm test`, or use `npm run test:watch` while developing.
+
 ---
 
 ## Project structure
@@ -55,6 +57,7 @@ frontend/
     │
     └── pages/
         ├── AnalyzePage.jsx        # Main analysis page
+      ├── CoachPage.jsx          # Sentence reframing by selected delivery style
         └── HistoryPage.jsx        # Session-only history (no persistence)
 ```
 
@@ -62,7 +65,7 @@ frontend/
 
 ## Backend integration
 
-**The analysis endpoint is not connected yet.**
+**The analysis and Coach endpoints are not connected yet.**
 
 All integration work is isolated to **`src/api/emotionClient.js`**.
 Set `BASE_URL` to the server origin to connect.
@@ -100,6 +103,17 @@ Set `BASE_URL` to the server origin to connect.
 
 5. **Rate limit / quota** details — document so the UI can surface a friendly message.
 
+6. **`POST /coach`** endpoint accepting JSON:
+
+   ```json
+   {
+     "text": "Please send the report.",
+     "style": "formal"
+   }
+   ```
+
+   Return `requestId`, `originalText`, `style`, `reframedText`, and `explanation`.
+
 ---
 
 ## Screens implemented
@@ -107,6 +121,7 @@ Set `BASE_URL` to the server origin to connect.
 | Screen | Description |
 |---|---|
 | **Analyse** | Text, Image, Voice inputs; consent notice; all status states |
+| **Coach** | Reframe one sentence as Light, Strict, Happy, Sad, Formal, or Informal |
 | **History** | Session-only list of analyses (cleared on page refresh) |
 
 ### Status states on the Analyse page
@@ -118,6 +133,10 @@ Set `BASE_URL` to the server origin to connect.
 | **Not connected** | `BASE_URL` is null in `emotionClient.js` |
 | **Error** | Backend returned a non-OK response |
 | **Success** | Results panel with per-modality cards |
+
+### Mock loading and failure demo
+
+Mock analysis waits briefly before returning a result so the loading state is visible. To demonstrate the error, include `[error]` anywhere in the text input. The mock service returns a readable failure, keeps the submitted payload available for **Try again**, and does not add the failed request to session history. Remove `[error]` or use **Reset** before submitting a successful sample.
 
 ---
 
