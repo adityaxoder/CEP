@@ -1,5 +1,5 @@
 /**
- * EmotionIQ API Client
+ * BrainiacConvo API Client
  *
  * This module is the single point of contact between the frontend and the
  * backend analysis endpoints. All fetch calls live here so UI components
@@ -35,7 +35,221 @@
  * ────────────────────────────────────────────────────────────────────────────
  */
 
-const BASE_URL = null; // ← backend teammate: set this to your server URL
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || null;
+const USE_MOCK = import.meta.env.VITE_USE_MOCK_ANALYSIS !== 'false';
+const MOCK_DELAY_MS = 900;
+
+function createRequestId(prefix) {
+  const randomId = typeof crypto !== 'undefined' && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  return `${prefix}-${randomId}`;
+}
+
+function getTextResult(text) {
+  const normalizedText = text.toLowerCase();
+  const concernedCue = /\b(worried|concerned|problem|issue|sorry|difficult|upset)\b/.test(normalizedText);
+  const positiveCue = /\b(thanks|thank you|great|happy|appreciate|excellent|love)\b/.test(normalizedText);
+
+  if (concernedCue) {
+    return {
+      label: 'Concerned',
+      confidence: 0.79,
+      explanation: 'The wording includes cues of concern or difficulty that may indicate a more serious tone.',
+    };
+  }
+
+  if (positiveCue) {
+    return {
+      label: 'Warm',
+      confidence: 0.84,
+      explanation: 'The wording includes appreciative or positive language with a friendly tone.',
+    };
+  }
+
+  return {
+    label: 'Calm',
+    confidence: 0.76,
+    explanation: 'The wording appears measured and conversational with no strong emotional cue detected.',
+  };
+}
+
+function getTextSummary(text, result) {
+  const wordCount = text.trim().split(/\s+/).length;
+  return `This ${wordCount}-word message is estimated to sound ${result.label.toLowerCase()}, based on its observable wording cues.`;
+}
+
+function getTextImprovement(text, result) {
+  if (result.label === 'Concerned') {
+    return 'Name the specific issue and the next action you need so the concern is easier to respond to.';
+  }
+
+  if (result.label === 'Warm') {
+    return 'Keep the appreciation, then add a direct request or clear next step if you need action.';
+  }
+
+  return 'For a clearer message, add the intended outcome or deadline while keeping the measured tone.';
+}
+
+function getMockFileCue(file) {
+  const fileName = file.name.toLowerCase();
+
+  if (/\b(worried|concerned|sad|frown|serious|issue)\b/.test(fileName)) return 'concerned';
+  if (/\b(happy|smile|laugh|joy|positive|excited)\b/.test(fileName)) return 'positive';
+  return 'neutral';
+}
+
+function getImageResult(image) {
+  const cue = getMockFileCue(image);
+
+  if (cue === 'concerned') {
+    return {
+      label: 'Concerned visible cues',
+      confidence: 0.74,
+      explanation: 'The image filename suggests a serious or concerned sample; this estimate is not a claim about the person\'s internal state.',
+    };
+  }
+
+  if (cue === 'positive') {
+    return {
+      label: 'Positive visible cues',
+      confidence: 0.81,
+      explanation: 'The image filename suggests a smiling or positive sample; this estimate is based on the provided demo cue only.',
+    };
+  }
+
+  return {
+    label: 'Neutral visible cues',
+    confidence: 0.63,
+    explanation: 'No strong visible cue is represented by this demo sample, so the estimate is neutral and uncertain.',
+  };
+}
+
+function getAudioResult(audio) {
+  const cue = getMockFileCue(audio);
+
+  if (cue === 'concerned') {
+    return {
+      label: 'Concerned delivery',
+      confidence: 0.71,
+      explanation: 'The filename suggests a serious delivery sample; this estimate describes vocal presentation, not inner emotion.',
+    };
+  }
+
+  if (cue === 'positive') {
+    return {
+      label: 'Warm delivery',
+      confidence: 0.78,
+      explanation: 'The filename suggests a warm or upbeat delivery sample; this is an estimate of vocal style.',
+    };
+  }
+
+  return {
+    label: 'Steady delivery',
+    confidence: 0.6,
+    explanation: 'The vocal delivery appears steady with limited emphasis in this neutral demo sample.',
+  };
+}
+
+function getCueCategory(label) {
+  if (/concerned/i.test(label)) return 'concerned';
+  if (/positive|warm/i.test(label)) return 'positive';
+  return 'neutral';
+}
+
+const MOCK_MODALITY_NAMES = {
+  text: 'text wording',
+  image: 'visible image cues',
+  audio: 'voice delivery',
+};
+
+function getMismatchDescription(entries) {
+  const cueDescriptions = entries
+    .map(({ modality, data }) => `${MOCK_MODALITY_NAMES[modality]} appears ${getCueCategory(data.label)}`)
+    .join(', ');
+
+  return `The available estimates are not aligned: ${cueDescriptions}. This can reflect different observable signals and is not evidence of deception or hidden emotion.`;
+}
+
+function normalizeAnalysisResult(data) {
+  return {
+    requestId: data?.requestId || createRequestId('request'),
+    modalities: {
+      text: data?.modalities?.text || null,
+      image: data?.modalities?.image || null,
+      audio: data?.modalities?.audio || null,
+    },
+    mismatch: data?.mismatch || null,
+    suggestion: data?.suggestion || null,
+    summary: data?.summary || null,
+    improvement: data?.improvement || null,
+  };
+}
+
+function createMockResult({ text, image, audio }) {
+  const textResult = text ? getTextResult(text) : null;
+  const modalities = {
+    text: textResult,
+    image: image ? getImageResult(image) : null,
+    audio: audio ? getAudioResult(audio) : null,
+  };
+
+  const available = Object.entries(modalities)
+    .filter(([, data]) => data)
+    .map(([modality, data]) => ({ modality, data }));
+  const mismatch = available.length > 1
+    && new Set(available.map(({ data }) => getCueCategory(data.label))).size > 1;
+
+  return {
+    requestId: createRequestId('mock'),
+    modalities,
+    mismatch: mismatch ? {
+      detected: true,
+      description: getMismatchDescription(available),
+    } : { detected: false, description: '' },
+    suggestion: mismatch
+      ? 'Consider checking the surrounding context or asking a clarifying question rather than relying on this estimate alone.'
+      : null,
+    summary: textResult ? getTextSummary(text, textResult) : null,
+    improvement: textResult ? getTextImprovement(text, textResult) : null,
+  };
+}
+
+function normalizeCoachResult(data) {
+  return {
+    requestId: data?.requestId || createRequestId('coach'),
+    originalText: data?.originalText || '',
+    style: data?.style || 'light',
+    reframedText: data?.reframedText || '',
+    explanation: data?.explanation || 'This is an optional wording estimate. Review it before sending.',
+  };
+}
+
+function lowerFirst(text) {
+  return text.charAt(0).toLowerCase() + text.slice(1);
+}
+
+function createMockCoachResult({ text, style }) {
+  const originalText = text.trim();
+  const core = originalText.replace(/[.!?]+$/, '');
+  const subject = lowerFirst(core);
+  const reframes = {
+    light: `Just a quick note: ${subject} when you have a moment.`,
+    strict: `Please ${subject} promptly.`,
+    happy: `I'd be happy to help with this: ${subject}!`,
+    sad: `I'm feeling a little discouraged about this: ${subject}.`,
+    formal: `Please be advised that ${subject}. Your attention to this matter would be appreciated.`,
+    informal: `Hey, can we ${subject}?`,
+  };
+
+  return normalizeCoachResult({
+    requestId: createRequestId('mock-coach'),
+    originalText,
+    style,
+    reframedText: reframes[style] || reframes.light,
+    explanation: `The sentence was adjusted toward a ${style} delivery while keeping the original intent as closely as possible.`,
+  });
+}
 
 /**
  * Sends text / image / audio to the backend analysis endpoint.
@@ -45,6 +259,18 @@ const BASE_URL = null; // ← backend teammate: set this to your server URL
  * @throws {Error} with a user-friendly message
  */
 export async function analyzeContent({ text, image, audio }) {
+  if (!text && !image && !audio) {
+    throw new Error('Add at least one signal before requesting an analysis.');
+  }
+
+  if (USE_MOCK) {
+    await new Promise((resolve) => setTimeout(resolve, MOCK_DELAY_MS));
+    if (text?.toLowerCase().includes('[error]')) {
+      throw new Error('The mock service could not process this sample. Remove [error] and try again.');
+    }
+    return normalizeAnalysisResult(createMockResult({ text, image, audio }));
+  }
+
   if (!BASE_URL) {
     // Backend not connected yet – return a sentinel so the UI shows the
     // "not connected" state rather than a generic error.
@@ -67,7 +293,38 @@ export async function analyzeContent({ text, image, audio }) {
     throw new Error(`Analysis failed (${response.status}): ${detail}`);
   }
 
-  return response.json();
+  return normalizeAnalysisResult(await response.json());
+}
+
+export async function coachText({ text, style }) {
+  if (!text?.trim()) {
+    throw new Error('Enter a sentence before using the conversation coach.');
+  }
+
+  if (USE_MOCK) {
+    await new Promise((resolve) => setTimeout(resolve, MOCK_DELAY_MS));
+    if (text.toLowerCase().includes('[error]')) {
+      throw new Error('The mock coach could not process this sentence. Remove [error] and try again.');
+    }
+    return createMockCoachResult({ text, style });
+  }
+
+  if (!BASE_URL) {
+    throw new NotConnectedError();
+  }
+
+  const response = await fetch(`${BASE_URL}/coach`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text: text.trim(), style }),
+  });
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => response.statusText);
+    throw new Error(`Coach request failed (${response.status}): ${detail}`);
+  }
+
+  return normalizeCoachResult(await response.json());
 }
 
 /** Sentinel error thrown when BASE_URL is not configured. */

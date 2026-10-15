@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowRight, Brain, Check, LockKeyhole, Mail, UserRound } from 'lucide-react';
+import { ArrowRight, Check, LockKeyhole, Mail, UserRound } from 'lucide-react';
 
 export function LoginPage({ onLogin }) {
   const [mode, setMode] = useState('login');
@@ -13,10 +13,9 @@ export function LoginPage({ onLogin }) {
 
   return (
     <main className="auth-page" id="main-content">
-      <section className="auth-visual" aria-label="EmotionIQ overview">
+      <section className="auth-visual" aria-label="BrainiacConvo overview">
         <div className="auth-visual-top">
-          <div className="auth-brand-mark" aria-hidden="true"><Brain size={20} /></div>
-          <span className="auth-brand-name">EmotionIQ</span>
+          <span className="auth-brand-name">BrainiacConvo</span>
         </div>
 
         <div className="auth-visual-copy">
@@ -25,22 +24,21 @@ export function LoginPage({ onLogin }) {
         </div>
 
         <div className="auth-visual-footer">
-          <span><Check size={14} /> Private by default</span>
-          <span><Check size={14} /> Estimates, not diagnoses</span>
+          <span><Check size={14} aria-hidden="true" /> Private by default</span>
+          <span><Check size={14} aria-hidden="true" /> Estimates, not diagnoses</span>
         </div>
       </section>
 
-      <section className="auth-panel" aria-label={isSignup ? 'Create an EmotionIQ account' : 'Sign in to EmotionIQ'}>
+      <section className="auth-panel" aria-label={isSignup ? 'Create a BrainiacConvo workspace' : 'Sign in to BrainiacConvo'}>
         <div className="auth-form-wrap">
           <div className="auth-mobile-brand">
-            <div className="auth-brand-mark" aria-hidden="true"><Brain size={18} /></div>
-            <span className="auth-brand-name">EmotionIQ</span>
+            <span className="auth-brand-name">BrainiacConvo</span>
           </div>
 
           <div className="auth-heading">
             {isSignup && <span className="auth-kicker">GET STARTED</span>}
-            <h2>{isSignup ? 'Create your workspace' : 'Sign in to continue'}</h2>
-            <p>{isSignup ? 'Use any placeholder details for this demo.' : 'Use the form below to continue.'}</p>
+            <h1>{isSignup ? 'Create your workspace' : 'Sign in to continue'}</h1>
+            <p>{isSignup ? 'Set up your workspace to begin.' : 'Enter the workspace to begin.'}</p>
           </div>
 
           <div className="auth-mode-tabs" role="tablist" aria-label="Account access">
@@ -54,33 +52,33 @@ export function LoginPage({ onLogin }) {
                 <span>Name</span>
                 <span className="auth-input-wrap">
                   <UserRound size={16} aria-hidden="true" />
-                  <input type="text" name="name" placeholder="Your name" autoComplete="name" />
+                  <input id="name-input" type="text" name="name" placeholder="Your name" autoComplete="name" />
                 </span>
               </label>
             )}
 
-            <label className="auth-field">
+            <label className="auth-field" htmlFor="email-input">
               <span>Email</span>
               <span className="auth-input-wrap">
                 <Mail size={16} aria-hidden="true" />
-                <input type="text" name="email" placeholder="you@example.com" autoComplete="email" />
+                <input id="email-input" type="email" name="email" placeholder="Enter anything" autoComplete="email" />
               </span>
             </label>
 
-            <label className="auth-field">
+            <label className="auth-field" htmlFor="password-input">
               <span>Password</span>
               <span className="auth-input-wrap">
                 <LockKeyhole size={16} aria-hidden="true" />
-                <input type="text" name="password" placeholder="Enter any password" autoComplete={isSignup ? 'new-password' : 'current-password'} />
+                <input id="password-input" type="password" name="password" placeholder="Enter anything" autoComplete={isSignup ? 'new-password' : 'current-password'} />
               </span>
             </label>
 
             {isSignup && (
-              <label className="auth-field">
+              <label className="auth-field" htmlFor="confirm-password-input">
                 <span>Confirm password</span>
                 <span className="auth-input-wrap">
                   <LockKeyhole size={16} aria-hidden="true" />
-                  <input type="text" name="confirmPassword" placeholder="Repeat any password" autoComplete="new-password" />
+                  <input id="confirm-password-input" type="password" name="confirmPassword" placeholder="Enter anything" autoComplete="new-password" />
                 </span>
               </label>
             )}

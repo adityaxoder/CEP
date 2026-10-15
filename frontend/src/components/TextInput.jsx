@@ -15,11 +15,8 @@ export function TextInput({ value, onChange }) {
         <span className="input-card-icon" aria-hidden="true">
           <Type size={14} />
         </span>
-        <h3 className="input-card-title">Text</h3>
+          <label className="input-card-title" htmlFor="text-input">Text message</label>
       </div>
-      <label htmlFor="text-input" className="sr-only">
-        Enter the text you want to analyse
-      </label>
       <textarea
         id="text-input"
         className="text-textarea"

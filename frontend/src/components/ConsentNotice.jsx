@@ -2,12 +2,9 @@
  * ConsentNotice – displayed above the Analyze button.
  * Users must acknowledge this before submitting.
  */
-import { useState } from 'react';
 import { ShieldCheck } from 'lucide-react';
 
-export function ConsentNotice({ onConsent }) {
-  const [checked, setChecked] = useState(false);
-
+export function ConsentNotice({ checked, onConsent }) {
   return (
     <div className="consent-box" role="region" aria-label="Consent notice">
       <div className="consent-icon">
@@ -16,26 +13,19 @@ export function ConsentNotice({ onConsent }) {
       <div className="consent-body">
         <p className="consent-title">Before you continue</p>
         <p className="consent-text">
-          EmotionIQ analyses observable cues in the content you provide.
-          Results are <strong>estimates only</strong> — they are not a
-          diagnosis, and they do not reveal what someone truly feels.
-          Your content is processed for analysis and is not stored by
-          this app.
+          <strong>Estimates only, not diagnoses.</strong>
         </p>
         <label className="consent-check-label">
           <input
             id="consent-checkbox"
             type="checkbox"
             checked={checked}
-            onChange={(e) => {
-              setChecked(e.target.checked);
-              onConsent(e.target.checked);
-            }}
+            onChange={(e) => onConsent(e.target.checked)}
             aria-describedby="consent-desc"
             className="consent-checkbox"
           />
           <span id="consent-desc">
-            I understand these are estimates, not a diagnosis.
+            I understand.
           </span>
         </label>
       </div>

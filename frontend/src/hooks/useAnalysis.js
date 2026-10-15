@@ -22,7 +22,7 @@ export function useAnalysis() {
       const data = await analyzeContent(payload);
       setResult(data);
       setStatus('success');
-      return data;          // ← callers can use the result directly
+      return data;
     } catch (err) {
       if (err instanceof NotConnectedError) {
         setStatus('not-connected');

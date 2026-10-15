@@ -6,7 +6,7 @@
  *   Emotion label badge
  *   Explanation text
  */
-import { Info, Image as ImageIcon, MessageSquare, Mic } from 'lucide-react';
+import { AlertCircle, Info, Image as ImageIcon, MessageSquare, Mic } from 'lucide-react';
 
 const MODALITY_ICONS = { text: MessageSquare, image: ImageIcon, audio: Mic };
 const MODALITY_LABELS = { text: 'Text', image: 'Image', audio: 'Voice' };
@@ -31,19 +31,21 @@ export function ModalityCard({ modality, data, missing }) {
 
   if (!data) {
     return (
-      <div className="modality-card modality-card--dim" aria-label={`${label} – unavailable`}>
+      <div className="modality-card modality-card--dim modality-card--unavailable" aria-label={`${label} – unavailable`}>
         <div className="modality-card-header">
           <span className="modality-emoji" aria-hidden="true"><Icon size={13} /></span>
           <h3 className="modality-name">{label}</h3>
         </div>
         <p className="modality-status">
-          <Info size={13} aria-hidden="true" /> Analysis unavailable
+          <AlertCircle size={13} aria-hidden="true" /> Unable to process this signal
         </p>
       </div>
     );
   }
 
-  const pct     = Math.round((data.confidence ?? 0) * 100);
+  const rawConfidence = Number(data.confidence);
+  const confidence = Number.isFinite(rawConfidence) ? Math.min(1, Math.max(0, rawConfidence)) : 0;
+  const pct     = Math.round(confidence * 100);
   const isHigh  = pct >= 70;
   const isMid   = pct >= 40 && pct < 70;
 
@@ -80,7 +82,7 @@ export function ModalityCard({ modality, data, missing }) {
       </div>
 
       {/* Big percentage + sparkline */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'space-between' }}>
+      <div className="modality-confidence-row">
         <p
           className="modality-pct"
           role="meter"
@@ -88,6 +90,7 @@ export function ModalityCard({ modality, data, missing }) {
           aria-valuenow={pct}
           aria-valuemin={0}
           aria-valuemax={100}
+          aria-valuetext={`${pct}% confidence, ${confidenceNote}`}
         >
           {pct}%
         </p>
@@ -109,7 +112,7 @@ export function ModalityCard({ modality, data, missing }) {
       </div>
 
       {/* Label badge */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div className="modality-label-row">
         <span className={`modality-label-badge ${badgeClass}`}>{data.label}</span>
         <span className="confidence-label">{confidenceNote}</span>
       </div>
