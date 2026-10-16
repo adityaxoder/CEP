@@ -1,0 +1,28 @@
+# Local environment files and secrets. Keep safe templates trackable.
+.env
+.env.*
+!.env.example
+!**/.env.example
+
+# Developer-local databases and SQLite data.
+*.db
+*.sqlite
+*.sqlite3
+
+# Python environments, bytecode, and test artifacts.
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Local uploads, temporary files, and downloaded model artifacts.
+backend/uploads/
+backend/temp_uploads/
+backend/.tmp/
+backend/.cache/
+backend/model_cache/
+backend/models_cache/
