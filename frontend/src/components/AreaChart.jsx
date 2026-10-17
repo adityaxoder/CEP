@@ -47,13 +47,13 @@ export function AreaChart() {
       >
         <defs>
           <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"   stopColor="var(--brand-500)" stopOpacity="0.25" />
-            <stop offset="100%" stopColor="var(--brand-500)" stopOpacity="0.02" />
+            <stop offset="0%"   stopColor="var(--blue, #1769d2)" stopOpacity="0.25" />
+            <stop offset="100%" stopColor="var(--blue, #1769d2)" stopOpacity="0.02" />
           </linearGradient>
           {/* Second (lighter) fill layer */}
           <linearGradient id="areaGrad2" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"   stopColor="var(--brand-300)" stopOpacity="0.15" />
-            <stop offset="100%" stopColor="var(--brand-300)" stopOpacity="0.01" />
+            <stop offset="0%"   stopColor="var(--green, #1b9a62)" stopOpacity="0.15" />
+            <stop offset="100%" stopColor="var(--green, #1b9a62)" stopOpacity="0.01" />
           </linearGradient>
         </defs>
 
@@ -84,7 +84,7 @@ export function AreaChart() {
         <path
           d={linePath}
           fill="none"
-          stroke="var(--indigo-500)"
+          stroke="var(--blue, #1769d2)"
           strokeWidth="2.5"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -95,7 +95,7 @@ export function AreaChart() {
           cx={toX(pts.length - 1)}
           cy={toY(pts[pts.length - 1])}
           r={5}
-          fill="var(--indigo-600)"
+          fill="var(--blue-dark, #0d4fa8)"
           stroke="#fff"
           strokeWidth="2"
         />

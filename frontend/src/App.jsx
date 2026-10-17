@@ -9,10 +9,12 @@ import { useState, useCallback } from 'react';
 import { Header }      from './components/Header';
 import { AnalyzePage } from './pages/AnalyzePage';
 import { HistoryPage } from './pages/HistoryPage';
+import { LoginPage }   from './pages/LoginPage';
 
 function App() {
-  const [currentPage, setCurrentPage]     = useState('analyze');
-  const [sessionHistory, setSessionHistory] = useState([]);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentPage, setCurrentPage]         = useState('text');
+  const [sessionHistory, setSessionHistory]   = useState([]);
 
   /** Called by AnalyzePage when an analysis completes successfully */
   const addHistoryEntry = useCallback((entry) => {
@@ -20,6 +22,10 @@ function App() {
   }, []);
 
   const clearHistory = useCallback(() => setSessionHistory([]), []);
+
+  if (!isAuthenticated) {
+    return <LoginPage onLogin={() => setIsAuthenticated(true)} />;
+  }
 
   return (
     <div className="app-shell">
@@ -29,11 +35,14 @@ function App() {
       <Header currentPage={currentPage} onNavigate={setCurrentPage} />
 
       <div className="page-wrapper">
-        {currentPage === 'analyze' && (
-          <AnalyzePage onAnalysisComplete={addHistoryEntry} />
-        )}
-        {currentPage === 'history' && (
+        {currentPage === 'history' ? (
           <HistoryPage history={sessionHistory} onClear={clearHistory} />
+        ) : (
+          <AnalyzePage
+            activeTab={currentPage}
+            onTabChange={setCurrentPage}
+            onAnalysisComplete={addHistoryEntry}
+          />
         )}
       </div>
 

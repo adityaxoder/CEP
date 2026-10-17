@@ -6,7 +6,11 @@ import { Brain, Plus, UserPlus } from 'lucide-react';
 
 export function Header({ currentPage, onNavigate }) {
   const navItems = [
-    { id: 'analyze', label: 'Analyse' },
+    { id: 'text', label: 'Text' },
+    { id: 'image', label: 'Image' },
+    { id: 'voice', label: 'Voice' },
+    { id: 'multimodal', label: 'Multimodal' },
+    { id: 'analysis', label: 'Analysis' },
     { id: 'history', label: 'History' },
   ];
 
@@ -17,7 +21,7 @@ export function Header({ currentPage, onNavigate }) {
         <button
           type="button"
           className="brand"
-          onClick={() => onNavigate('analyze')}
+          onClick={() => onNavigate('text')}
           aria-label="EmotionIQ home"
         >
           <span className="brand-icon" aria-hidden="true">
@@ -50,7 +54,12 @@ export function Header({ currentPage, onNavigate }) {
             <UserPlus size={14} aria-hidden="true" />
             Invite
           </button>
-          <button type="button" className="btn-primary" aria-label="New analysis">
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() => onNavigate('multimodal')}
+            aria-label="New analysis"
+          >
             <Plus size={14} aria-hidden="true" />
             New Analysis
           </button>
