@@ -6,7 +6,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, field_validator
+from pydantic import AliasChoices, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.engine import make_url
 
@@ -19,6 +19,7 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
+        populate_by_name=True,
     )
 
     app_env: Literal["development", "test", "production"] = "development"
@@ -30,15 +31,55 @@ class Settings(BaseSettings):
     max_audio_bytes: int = Field(default=10_485_760, gt=0)
 
     model_device: str = "cpu"
-    text_model_name: str = "baseline"
+    text_model_name: str = "j-hartmann/emotion-english-distilroberta-base"
     image_model_name: str = "baseline"
     audio_model_name: str = "baseline"
     coach_provider: str = "baseline"
 
+    hf_api_token: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("hf_api_token", "hf_token", "huggingface_api_token", "huggingface_hub_token"),
+    )
+    hf_inference_provider: str = Field(
+        default="hf-inference",
+        validation_alias=AliasChoices("hf_inference_provider", "hf_provider"),
+    )
+    hf_inference_api_url: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("hf_inference_api_url", "hf_api_base_url"),
+    )
+    text_model_timeout_seconds: float = Field(
+        default=10.0,
+        gt=0,
+        validation_alias=AliasChoices("text_model_timeout_seconds", "text_provider_timeout", "model_timeout"),
+    )
+    allow_dev_baseline: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("allow_dev_baseline", "enable_dev_baseline"),
+    )
+
     database_url: str = "sqlite:///./data/emotioniq.db"
     auth_enabled: bool = True
 
-    @field_validator("app_version", "model_device", "text_model_name", "image_model_name", "audio_model_name", "coach_provider", "database_url")
+    @field_validator("hf_api_token", mode="before")
+    @classmethod
+    def normalize_token(cls, value: str | None) -> str | None:
+        """Strip whitespace from optional token and convert empty string to None."""
+        if value is None:
+            return None
+        stripped = str(value).strip()
+        return stripped if stripped else None
+
+    @field_validator(
+        "app_version",
+        "model_device",
+        "text_model_name",
+        "image_model_name",
+        "audio_model_name",
+        "coach_provider",
+        "database_url",
+        "hf_inference_provider",
+    )
     @classmethod
     def reject_blank_values(cls, value: str) -> str:
         """Reject blank configuration values instead of silently accepting them."""
@@ -46,6 +87,15 @@ class Settings(BaseSettings):
         if not normalized:
             raise ValueError("Value must not be blank")
         return normalized
+
+    @field_validator("hf_inference_api_url", mode="before")
+    @classmethod
+    def normalize_api_url(cls, value: str | None) -> str | None:
+        """Strip whitespace from optional URL and convert empty string to None."""
+        if value is None:
+            return None
+        stripped = str(value).strip()
+        return stripped if stripped else None
 
     @field_validator("cors_origins")
     @classmethod

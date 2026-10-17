@@ -11,6 +11,9 @@ dependencies = [
     "alembic>=1.14,<2.0",
     "python-multipart>=0.0.20,<1.0",
     "pillow>=11.0,<13.0",
+    "httpx>=0.28,<1.0",
+    "huggingface-hub>=0.28.0,<1.0",
+    "aiohttp>=3.9.0,<4.0",
 ]
 
 [dependency-groups]
