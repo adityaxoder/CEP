@@ -4,11 +4,11 @@
  * Owns the current page, session-only analysis history, and selected result.
  */
 import { useState, useCallback } from 'react';
-import { Header }      from './components/Header';
+import { Header } from './components/Header';
 import { AnalyzePage } from './pages/AnalyzePage';
 import { CoachPage } from './pages/CoachPage';
 import { HistoryPage } from './pages/HistoryPage';
-import { LoginPage }   from './pages/LoginPage';
+import { LoginPage } from './pages/LoginPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { DEFAULT_PAGE, normalizePage } from './state/appState';
 
@@ -28,8 +28,10 @@ function App() {
     setHistory([]);
     setSelectedResult(null);
   }, []);
+
   const navigateTo = useCallback((page) => setCurrentPage(normalizePage(page)), []);
   const clearSelectedResult = useCallback(() => setSelectedResult(null), []);
+
   const signOut = useCallback(() => {
     setIsAuthenticated(false);
     setCurrentPage(DEFAULT_PAGE);
@@ -68,7 +70,7 @@ function App() {
 
       <footer className="app-footer" role="contentinfo">
         <p>
-          BrainiacConvo — estimates based on observable cues only. Not a diagnosis.
+          EmotionIQ — estimates based on observable cues only. Not a diagnosis.
         </p>
       </footer>
     </div>
