@@ -1,27 +1,43 @@
 /**
  * App – root component.
  *
- * Owns:
- *   • currentPage  state ("analyze" | "history")
- *   • sessionHistory state – analysis runs for this tab only, no persistence
+ * Owns the current page, session-only analysis history, and selected result.
  */
 import { useState, useCallback } from 'react';
-import { Header }      from './components/Header';
+import { Header } from './components/Header';
 import { AnalyzePage } from './pages/AnalyzePage';
+import { CoachPage } from './pages/CoachPage';
 import { HistoryPage } from './pages/HistoryPage';
-import { LoginPage }   from './pages/LoginPage';
+import { LoginPage } from './pages/LoginPage';
+import { SettingsPage } from './pages/SettingsPage';
+import { DEFAULT_PAGE, normalizePage } from './state/appState';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentPage, setCurrentPage]         = useState('text');
-  const [sessionHistory, setSessionHistory]   = useState([]);
+  const [currentPage, setCurrentPage] = useState(DEFAULT_PAGE);
+  const [history, setHistory] = useState([]);
+  const [selectedResult, setSelectedResult] = useState(null);
 
   /** Called by AnalyzePage when an analysis completes successfully */
   const addHistoryEntry = useCallback((entry) => {
-    setSessionHistory((prev) => [entry, ...prev]);
+    setHistory((currentHistory) => [entry, ...currentHistory]);
+    setSelectedResult(entry.result);
   }, []);
 
-  const clearHistory = useCallback(() => setSessionHistory([]), []);
+  const clearHistory = useCallback(() => {
+    setHistory([]);
+    setSelectedResult(null);
+  }, []);
+
+  const navigateTo = useCallback((page) => setCurrentPage(normalizePage(page)), []);
+  const clearSelectedResult = useCallback(() => setSelectedResult(null), []);
+
+  const signOut = useCallback(() => {
+    setIsAuthenticated(false);
+    setCurrentPage(DEFAULT_PAGE);
+    setHistory([]);
+    setSelectedResult(null);
+  }, []);
 
   if (!isAuthenticated) {
     return <LoginPage onLogin={() => setIsAuthenticated(true)} />;
@@ -32,16 +48,22 @@ function App() {
       {/* Skip-to-content for keyboard / screen reader users */}
       <a href="#main-content" className="skip-link">Skip to main content</a>
 
-      <Header currentPage={currentPage} onNavigate={setCurrentPage} />
+      <Header currentPage={currentPage} onNavigate={navigateTo} onLogout={signOut} />
 
       <div className="page-wrapper">
         {currentPage === 'history' ? (
-          <HistoryPage history={sessionHistory} onClear={clearHistory} />
+          <HistoryPage history={history} onClear={clearHistory} onNavigate={navigateTo} />
+        ) : currentPage === 'settings' ? (
+          <SettingsPage historyCount={history.length} onClearHistory={clearHistory} onSignOut={signOut} />
+        ) : currentPage === 'coach' ? (
+          <CoachPage />
         ) : (
           <AnalyzePage
             activeTab={currentPage}
-            onTabChange={setCurrentPage}
+            selectedResult={selectedResult}
+            onTabChange={navigateTo}
             onAnalysisComplete={addHistoryEntry}
+            onResultReset={clearSelectedResult}
           />
         )}
       </div>

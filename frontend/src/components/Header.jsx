@@ -2,16 +2,30 @@
  * Header – top navigation bar.
  * Design matches the reference: brand | tab nav | action buttons
  */
-import { Brain, Plus, UserPlus } from 'lucide-react';
+import {
+  Activity,
+  Brain,
+  Clock,
+  FileText,
+  Image as ImageIcon,
+  LogOut,
+  Mic,
+  Plus,
+  Settings,
+  Sparkles,
+  WandSparkles,
+} from 'lucide-react';
 
-export function Header({ currentPage, onNavigate }) {
+export function Header({ currentPage, onNavigate, onLogout }) {
   const navItems = [
-    { id: 'text', label: 'Text' },
-    { id: 'image', label: 'Image' },
-    { id: 'voice', label: 'Voice' },
-    { id: 'multimodal', label: 'Multimodal' },
-    { id: 'analysis', label: 'Analysis' },
-    { id: 'history', label: 'History' },
+    { id: 'text', label: 'Text', icon: FileText },
+    { id: 'image', label: 'Image', icon: ImageIcon },
+    { id: 'voice', label: 'Voice', icon: Mic },
+    { id: 'multimodal', label: 'Multimodal', icon: Sparkles },
+    { id: 'coach', label: 'Coach', icon: WandSparkles },
+    { id: 'analysis', label: 'Analysis', icon: Activity },
+    { id: 'history', label: 'History', icon: Clock },
+    { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
   return (
@@ -33,7 +47,7 @@ export function Header({ currentPage, onNavigate }) {
         {/* Tab nav */}
         <nav aria-label="Main navigation">
           <ul className="nav-list" role="list">
-            {navItems.map(({ id, label }) => (
+            {navItems.map(({ id, label, icon: Icon }) => (
               <li key={id}>
                 <button
                   type="button"
@@ -41,6 +55,7 @@ export function Header({ currentPage, onNavigate }) {
                   onClick={() => onNavigate(id)}
                   aria-current={currentPage === id ? 'page' : undefined}
                 >
+                  <Icon size={15} aria-hidden="true" />
                   {label}
                 </button>
               </li>
@@ -48,12 +63,7 @@ export function Header({ currentPage, onNavigate }) {
           </ul>
         </nav>
 
-        {/* Action buttons (right) */}
         <div className="header-actions">
-          <button type="button" className="btn-ghost" aria-label="Invite team member">
-            <UserPlus size={14} aria-hidden="true" />
-            Invite
-          </button>
           <button
             type="button"
             className="btn-primary"
@@ -62,6 +72,10 @@ export function Header({ currentPage, onNavigate }) {
           >
             <Plus size={14} aria-hidden="true" />
             New Analysis
+          </button>
+          <button type="button" className="btn-ghost header-logout" onClick={onLogout}>
+            <LogOut size={14} aria-hidden="true" />
+            Logout
           </button>
         </div>
       </div>
