@@ -143,7 +143,8 @@ def fuse_predictions(predictions):
                 ],
                 "message": (
                     f"Possible mismatch detected in {task}: "
-                    "the models disagree on their predictions."
+                    f"the models disagree on their observable predictions ({', '.join(sorted(labels))}). "
+                    "This reflects differing observable cues and is not evidence of deception or hidden emotion."
                 )
             })
 
@@ -221,4 +222,3 @@ if __name__ == "__main__":
             indent=4
         )
     )
-```

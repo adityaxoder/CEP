@@ -1,13 +1,36 @@
 
 import json
 import os
+import sys
 import tempfile
+from pathlib import Path
+
+# Ensure both current directory, models directory, and repo root are in sys.path
+_current_dir = Path(__file__).resolve().parent
+_models_dir = _current_dir / "models"
+_repo_dir = _current_dir.parent
+
+for _p in (str(_current_dir), str(_models_dir), str(_repo_dir)):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
 
 import streamlit as st
 
-from text_model import analyze_text
-from image_model import analyze_image
-from voice_model import analyze_voice
+try:
+    from text_model import analyze_text
+except ImportError:
+    from models.text_model import analyze_text
+
+try:
+    from image_model import analyze_image
+except ImportError:
+    from models.image_models import analyze_image
+
+try:
+    from voice_model import analyze_voice
+except ImportError:
+    from models.voice_models import analyze_voice
+
 from ai_fusion import fuse_predictions
 
 
@@ -414,4 +437,3 @@ st.caption(
     "AI & Fusion | Text Analysis | Image Analysis | "
     "Voice Analysis | Prediction Fusion | Mismatch Detection"
 )
-```
