@@ -2,7 +2,19 @@
  * Header – top navigation bar.
  * Design matches the reference: brand | tab nav | action buttons
  */
-import { Activity, Clock, FileText, Image as ImageIcon, LogOut, Mic, Settings, Sparkles, WandSparkles } from 'lucide-react';
+import {
+  Activity,
+  Brain,
+  Clock,
+  FileText,
+  Image as ImageIcon,
+  LogOut,
+  Mic,
+  Plus,
+  Settings,
+  Sparkles,
+  WandSparkles,
+} from 'lucide-react';
 
 export function Header({ currentPage, onNavigate, onLogout }) {
   const navItems = [
@@ -24,9 +36,12 @@ export function Header({ currentPage, onNavigate, onLogout }) {
           type="button"
           className="brand"
           onClick={() => onNavigate('text')}
-          aria-label="BrainiacConvo home"
+          aria-label="EmotionIQ home"
         >
-          <span className="brand-name">BrainiacConvo</span>
+          <span className="brand-icon" aria-hidden="true">
+            <Brain size={18} />
+          </span>
+          <span className="brand-name">EmotionIQ</span>
         </button>
 
         {/* Tab nav */}
@@ -39,7 +54,7 @@ export function Header({ currentPage, onNavigate, onLogout }) {
                   className={`nav-link ${currentPage === id ? 'nav-link--active' : ''}`}
                   onClick={() => onNavigate(id)}
                   aria-current={currentPage === id ? 'page' : undefined}
-                  >
+                >
                   <Icon size={15} aria-hidden="true" />
                   {label}
                 </button>
@@ -49,12 +64,20 @@ export function Header({ currentPage, onNavigate, onLogout }) {
         </nav>
 
         <div className="header-actions">
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() => onNavigate('multimodal')}
+            aria-label="New analysis"
+          >
+            <Plus size={14} aria-hidden="true" />
+            New Analysis
+          </button>
           <button type="button" className="btn-ghost header-logout" onClick={onLogout}>
             <LogOut size={14} aria-hidden="true" />
             Logout
           </button>
         </div>
-
       </div>
     </header>
   );

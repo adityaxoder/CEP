@@ -25,6 +25,22 @@
   --ease: cubic-bezier(.22, 1, .36, 1);
   --font: "Manrope", "Avenir Next", "Segoe UI", sans-serif;
   --display-font: "Space Grotesk", "Manrope", sans-serif;
+
+  /* Compatibility tokens */
+  --border: var(--line);
+  --border-focus: var(--blue);
+  --bg-body: var(--canvas);
+  --bg-white: var(--white);
+  --bg-soft: var(--canvas);
+  --bg-card: var(--white);
+  --bg-input: var(--white);
+  --text-primary: var(--black);
+  --text-secondary: var(--muted);
+  --text-muted: var(--subtle);
+  --brand-500: var(--blue);
+  --brand-300: #80b6ff;
+  --indigo-500: var(--blue);
+  --indigo-600: var(--blue-dark);
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -271,6 +287,7 @@ button:disabled { cursor: not-allowed; }
 .status-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 8px; color: var(--muted); background: var(--canvas); border-radius: 6px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .3px; }
 .status-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--subtle); }
 .status-dot--green { background: var(--green); box-shadow: 0 0 0 3px rgba(27,154,98,.12); }
+.status-dot--amber { background: var(--blue); box-shadow: 0 0 0 3px rgba(23,105,210,.12); }
 .status-dot--muted { background: var(--subtle); }
 .waveform-stack { display: grid; gap: 13px; }
 .waveform-wrap { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 3px; min-height: 65px; overflow: hidden; padding: 0 5px; background: var(--canvas); border: 1px solid var(--line); border-radius: 9px; }

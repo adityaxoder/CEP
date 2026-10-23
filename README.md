@@ -35,15 +35,15 @@ People can communicate different signals through their words, facial expressions
 |---|---|---|
 | Frontend | React + Vite | Pages, forms, dashboard, and interactions |
 | Styling | Tailwind CSS + Lucide React | Responsive design, components, and icons |
-| Backend | Python + FastAPI | API endpoints, validation, model calls, and fusion |
+| Backend | Python 3.12 + FastAPI | API endpoints, validation, model calls, and fusion; managed with `uv` |
 | AI | Pretrained models / inference APIs | Text, facial-expression, and speech-emotion estimates |
-| Database and auth | Supabase / PostgreSQL + Auth | Optional accounts and persistent history |
+| Database and auth | SQLite + SQLAlchemy/Alembic; JWT authentication | Developer-local database and optional accounts/history; migrations are shared through Git |
 | Charts | Recharts | Emotion history and trends |
 | Version control | Git + GitHub | Team source-code management |
 
 ## Run the frontend locally
 
-The detailed, numbered UI implementation checklist is available in [UI_IMPLEMENTATION_PLAN.md](UI_IMPLEMENTATION_PLAN.md). Each task is scoped to be completed independently. Browser review is manual: the development agent must not automatically open or inspect the running URL; the project owner should follow each task's manual test checklist.
+The detailed, numbered UI implementation checklist is available in [UI_IMPLEMENTATION_PLAN.md](UI_IMPLEMENTATION_PLAN.md). The backend roadmap is available in [BACKEND_IMPLEMENTATION_PLAN.md](BACKEND_IMPLEMENTATION_PLAN.md). Each task is scoped to be completed independently. Browser review is manual: the development agent must not automatically open or inspect the running URL; the project owner should follow each task's manual test checklist.
 
 The current repository contains the React + Vite frontend in `frontend/`.
 

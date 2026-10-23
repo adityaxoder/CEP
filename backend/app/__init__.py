@@ -1,0 +1,2 @@
+"""EmotionIQ backend application package."""
+

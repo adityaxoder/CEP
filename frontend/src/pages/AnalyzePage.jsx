@@ -1,3 +1,13 @@
+/**
+ * AnalyzePage – workspace layout supporting single-mode and multimodal workflows.
+ *
+ * Controlled tabs:
+ *   • text: Text analysis input
+ *   • image: Image facial-expression input
+ *   • voice: Audio vocal-emotion input
+ *   • multimodal: Combined text + image + voice inputs
+ *   • analysis: Results panel
+ */
 import { useState } from 'react';
 import { AlertCircle, FileText, Image as ImageIcon, Info, Loader2, Mic, RotateCcw, Sparkles, WifiOff } from 'lucide-react';
 import { TextInput } from '../components/TextInput';

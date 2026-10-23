@@ -19,7 +19,7 @@ export function ModalityCard({ modality, data, missing }) {
     return (
       <div className="modality-card modality-card--dim" aria-label={`${label} – not provided`}>
         <div className="modality-card-header">
-          <span className="modality-emoji" aria-hidden="true"><Icon size={13} /></span>
+          <span className="modality-emoji" aria-hidden="true">{Icon ? <Icon size={13} /> : null}</span>
           <h3 className="modality-name">{label}</h3>
         </div>
         <p className="modality-status">
@@ -33,7 +33,7 @@ export function ModalityCard({ modality, data, missing }) {
     return (
       <div className="modality-card modality-card--dim modality-card--unavailable" aria-label={`${label} – unavailable`}>
         <div className="modality-card-header">
-          <span className="modality-emoji" aria-hidden="true"><Icon size={13} /></span>
+          <span className="modality-emoji" aria-hidden="true">{Icon ? <Icon size={13} /> : null}</span>
           <h3 className="modality-name">{label}</h3>
         </div>
         <p className="modality-status">
@@ -73,7 +73,7 @@ export function ModalityCard({ modality, data, missing }) {
     <div className="modality-card" aria-label={`${label} modality result`}>
       {/* Header row */}
       <div className="modality-card-header">
-        <span className="modality-emoji" aria-hidden="true"><Icon size={13} /></span>
+        <span className="modality-emoji" aria-hidden="true">{Icon ? <Icon size={13} /> : null}</span>
         <h3 className="modality-name">{label}</h3>
         <div className="modality-status-wrap">
           <span className={`status-dot ${dotClass}`} aria-hidden="true" />
