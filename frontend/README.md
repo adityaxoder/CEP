@@ -63,56 +63,38 @@ frontend/
 
 ---
 
-## Backend integration
+## Backend integration (Person 3 Implementation)
 
-**The analysis and Coach endpoints are not connected yet.**
+**The analysis and Coach endpoints are fully integrated with the FastAPI backend.**
 
-All integration work is isolated to **`src/api/emotionClient.js`**.
-Set `BASE_URL` to the server origin to connect.
+All integration logic lives in **`src/api/emotionClient.js`**.
 
-### Required from the backend teammate
+### Connecting to the live backend (Mock Mode Disabled)
 
-1. **Server origin** (e.g. `http://localhost:8000`)
+Create a local `.env` or set environment variables in `frontend/.env`:
 
-2. **`POST /analyze`** endpoint accepting `multipart/form-data`:
+```bash
+VITE_API_BASE_URL=http://localhost:8000
+VITE_USE_MOCK_ANALYSIS=false
+```
 
-   | Field | Type | Notes |
-   |---|---|---|
-   | `text` | string | optional |
-   | `image` | File | optional – JPEG/PNG/WEBP |
-   | `audio` | File | optional – MP3/WAV/OGG/WEBM |
+When `VITE_USE_MOCK_ANALYSIS=false`, `analyzeContent()` and `coachText()` transmit live requests to the backend with:
+- `AbortController` timeout protection (default 15 seconds)
+- Automatic detection of network disconnection (`NetworkError`) and server timeouts (`TimeoutError`)
+- Automatic translation of structured backend error codes (`EMPTY_REQUEST`, `UPLOAD_TOO_LARGE`, `UNSUPPORTED_MEDIA_TYPE`, `MALFORMED_IMAGE`, `MALFORMED_AUDIO`, `MODEL_UNAVAILABLE`, `RATE_LIMITED`, `INTERNAL_ERROR`) into friendly, readable user messages.
 
-3. **Response JSON shape:**
+### Integrated Endpoints
 
-   ```json
-   {
-     "requestId": "uuid",
-     "modalities": {
-       "text":  { "label": "...", "confidence": 0.87, "explanation": "..." },
-       "image": { "label": "...", "confidence": 0.61, "explanation": "..." },
-       "audio": null
-     },
-     "mismatch": { "detected": true, "description": "..." },
-     "suggestion": "Optional wording suggestion here."
-   }
-   ```
+1. **`POST /analyze`** (multipart/form-data):
+   - `text` (string, max 10,000 characters)
+   - `image` (file: JPEG, PNG, or WEBP, max 5 MB)
+   - `audio` (file: MP3, WAV, OGG, or WEBM, max 10 MB)
+   - Returns structured `AnalysisResponse` with per-modality results, non-diagnostic cue explanations, contradiction/mismatch detection, and communication suggestions.
 
-   Any modality the backend cannot process should be `null` (not omitted).
+2. **`POST /coach`** (application/json):
+   - Body: `{ "text": "...", "style": "light" | "strict" | "happy" | "sad" | "formal" | "informal" }`
+   - Returns reframed delivery sentence preserving original intent.
 
-4. **Auth headers** (if required) — add them to `analyzeContent()` in `emotionClient.js`.
-
-5. **Rate limit / quota** details — document so the UI can surface a friendly message.
-
-6. **`POST /coach`** endpoint accepting JSON:
-
-   ```json
-   {
-     "text": "Please send the report.",
-     "style": "formal"
-   }
-   ```
-
-   Return `requestId`, `originalText`, `style`, `reframedText`, and `explanation`.
 
 ---
 

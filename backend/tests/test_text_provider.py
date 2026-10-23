@@ -220,7 +220,10 @@ async def test_provider_asyncio_timeout_raises_typed_error() -> None:
 @pytest.mark.anyio
 async def test_provider_rate_limit_raises_typed_error() -> None:
     """Verify HfHubHTTPError with rate limit maps to ProviderRateLimitError (429)."""
-    http_err = errors.HfHubHTTPError("Rate limit reached", server_message="429 Rate limit reached")
+    from unittest.mock import MagicMock
+    mock_resp = MagicMock()
+    mock_resp.status_code = 429
+    http_err = errors.HfHubHTTPError("Rate limit reached", response=mock_resp, server_message="429 Rate limit reached")
     mock_client = make_mock_client(side_effect=http_err)
     provider = HuggingFaceTextProvider(client=mock_client)
 
@@ -253,7 +256,10 @@ async def test_provider_overloaded_loading_raises_unavailable() -> None:
 @pytest.mark.anyio
 async def test_provider_model_not_found_raises_unavailable() -> None:
     """Verify RepositoryNotFoundError maps to ProviderUnavailableError (503)."""
-    mock_client = make_mock_client(side_effect=errors.RepositoryNotFoundError("Repository Not Found"))
+    from unittest.mock import MagicMock
+    mock_resp = MagicMock()
+    mock_resp.status_code = 404
+    mock_client = make_mock_client(side_effect=errors.RepositoryNotFoundError("Repository Not Found", response=mock_resp))
     provider = HuggingFaceTextProvider(model_id="nonexistent-model", client=mock_client)
 
     with pytest.raises(ProviderUnavailableError) as exc_info:
@@ -280,7 +286,10 @@ async def test_provider_connection_failure_raises_unavailable() -> None:
 @pytest.mark.anyio
 async def test_provider_authentication_failure_raises_unavailable() -> None:
     """Verify auth errors map to ProviderUnavailableError without leaking token."""
-    http_err = errors.HfHubHTTPError("Invalid token", server_message="401 Unauthorized: Invalid token")
+    from unittest.mock import MagicMock
+    mock_resp = MagicMock()
+    mock_resp.status_code = 401
+    http_err = errors.HfHubHTTPError("Invalid token", response=mock_resp, server_message="401 Unauthorized: Invalid token")
     mock_client = make_mock_client(side_effect=http_err)
     provider = HuggingFaceTextProvider(api_token="secret_token_12345", client=mock_client)
 
@@ -329,7 +338,10 @@ async def test_malformed_responses_raise_typed_error(malformed_payload: Any) -> 
 @pytest.mark.anyio
 async def test_inference_failure_never_returns_fallback_prediction() -> None:
     """Verify that when inference fails, an exception is raised rather than a made-up result."""
-    mock_client = make_mock_client(side_effect=errors.HfHubHTTPError("500 Server Error"))
+    from unittest.mock import MagicMock
+    mock_resp = MagicMock()
+    mock_resp.status_code = 500
+    mock_client = make_mock_client(side_effect=errors.HfHubHTTPError("500 Server Error", response=mock_resp))
     provider = HuggingFaceTextProvider(client=mock_client)
 
     with pytest.raises(ProviderError):

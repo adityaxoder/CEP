@@ -63,7 +63,27 @@ npm run test:watch
 npm run preview
 ```
 
-The Phase 1 UI is complete and runs in mock mode by default. Backend integration is isolated in `frontend/src/api/emotionClient.js`.
+The frontend can run either in local mock mode or directly connected to the FastAPI backend service:
+- To run with live backend integration (mock mode disabled), set `VITE_USE_MOCK_ANALYSIS=false` and `VITE_API_BASE_URL=http://localhost:8000` in `frontend/.env`.
+- Live API integration includes automatic timeout protection, network disconnection handling, and readable translation of backend validation and model errors.
+
+## Run the backend locally
+
+From `backend/`:
+
+```bash
+cd backend
+uv sync # or create python virtualenv
+uv run alembic upgrade head
+uv run uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+Run backend tests:
+
+```bash
+uv run pytest
+```
+
 
 ## Functional requirements
 

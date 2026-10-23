@@ -26,3 +26,6 @@ backend/.tmp/
 backend/.cache/
 backend/model_cache/
 backend/models_cache/
+
+# Editor and IDE configurations
+.vscode/

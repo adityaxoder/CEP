@@ -35,9 +35,13 @@
  * ────────────────────────────────────────────────────────────────────────────
  */
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || null;
-const USE_MOCK = import.meta.env.VITE_USE_MOCK_ANALYSIS !== 'false';
-const MOCK_DELAY_MS = 900;
+export const DEFAULT_API_BASE_URL = 'http://localhost:8000';
+export const DEFAULT_REQUEST_TIMEOUT_MS = 15000;
+
+export const BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.VITE_USE_MOCK_ANALYSIS === 'false' ? DEFAULT_API_BASE_URL : null);
+export const USE_MOCK = import.meta.env.VITE_USE_MOCK_ANALYSIS !== 'false';
+export const MOCK_DELAY_MS = 900;
+
 
 function createRequestId(prefix) {
   const randomId = typeof crypto !== 'undefined' && crypto.randomUUID
@@ -258,12 +262,127 @@ function createMockCoachResult({ text, style }) {
  * @returns {Promise<AnalysisResult>}
  * @throws {Error} with a user-friendly message
  */
-export async function analyzeContent({ text, image, audio }) {
+export class NotConnectedError extends Error {
+  constructor() {
+    super('Analysis endpoint is not connected yet.');
+    this.name = 'NotConnectedError';
+  }
+}
+
+export class NetworkError extends Error {
+  constructor(message = 'Network connection failed. Please verify the backend is running and check your connection.') {
+    super(message);
+    this.name = 'NetworkError';
+  }
+}
+
+export class TimeoutError extends Error {
+  constructor(message = 'Request timed out. The server took too long to respond. Please try again.') {
+    super(message);
+    this.name = 'TimeoutError';
+  }
+}
+
+/**
+ * Maps HTTP status codes and structured backend errors to clear, friendly user messages.
+ *
+ * @param {number} status
+ * @param {object|null} errorBody
+ * @returns {string}
+ */
+export function mapBackendError(status, errorBody) {
+  if (typeof errorBody === 'object' && errorBody !== null) {
+    const { code, message } = errorBody;
+    const errorMap = {
+      EMPTY_REQUEST: 'Add at least one signal before requesting an analysis.',
+      INVALID_INPUT: message || 'Invalid input. Please check your submission and try again.',
+      INVALID_STYLE: message || 'The requested coaching style is not recognized.',
+      TEXT_TOO_LONG: 'Your text message exceeds the maximum allowed length of 10,000 characters. Please shorten it.',
+      UPLOAD_TOO_LARGE: 'The uploaded file is too large. Images must be 5 MB or less, and audio must be 10 MB or less.',
+      UNSUPPORTED_MEDIA_TYPE: 'Unsupported file format. Please upload a valid image (JPEG/PNG/WEBP) or audio (MP3/WAV/OGG/WEBM).',
+      MALFORMED_IMAGE: 'The selected image could not be processed. Please try another image file.',
+      MALFORMED_AUDIO: 'The selected audio file could not be processed. Please try another recording.',
+      MODEL_UNAVAILABLE: 'The emotion analysis service is currently unavailable. Please try again later.',
+      MODEL_TIMEOUT: 'The analysis service took too long to respond. Please try again.',
+      RATE_LIMITED: 'You have sent too many requests. Please wait a moment and try again.',
+      INTERNAL_ERROR: 'The server encountered an unexpected error processing your request. Please try again.',
+    };
+
+    if (code && errorMap[code]) {
+      return errorMap[code];
+    }
+    if (message && typeof message === 'string' && message.trim()) {
+      return message.trim();
+    }
+  }
+
+  switch (status) {
+    case 400:
+      return 'Invalid request. Please verify your input and try again.';
+    case 413:
+      return 'The uploaded file exceeds the maximum allowed size.';
+    case 415:
+      return 'Unsupported file format. Please upload a supported image or audio file.';
+    case 422:
+      return 'Validation failed. Please ensure at least one valid input signal is provided.';
+    case 429:
+      return 'Too many requests. Please wait a moment and try again.';
+    case 502:
+      return 'The model provider returned an invalid response. Please try again.';
+    case 503:
+      return 'The emotion analysis service is currently unavailable. Please try again later.';
+    case 504:
+      return 'The analysis request timed out. Please check your connection and try again.';
+    default:
+      return `Server error (${status}). Please try again later.`;
+  }
+}
+
+/**
+ * Fetch wrapper that attaches a timeout signal and maps network/timeout failures.
+ */
+async function fetchWithTimeout(url, options = {}, timeoutMs = DEFAULT_REQUEST_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    return response;
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      throw new TimeoutError('The request timed out. The server took too long to respond. Please try again.');
+    }
+    if (err instanceof TypeError || err.message?.includes('fetch') || err.message?.includes('NetworkError')) {
+      throw new NetworkError(
+        `Unable to reach the backend server at ${BASE_URL || DEFAULT_API_BASE_URL}. Please ensure the server is running.`
+      );
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+/**
+ * Sends text / image / audio to the backend analysis endpoint.
+ *
+ * @param {{ text?: string, image?: File, audio?: File }} payload
+ * @param {{ useMock?: boolean, baseUrl?: string, timeoutMs?: number }} [options]
+ * @returns {Promise<AnalysisResult>}
+ * @throws {Error} with a user-friendly message
+ */
+export async function analyzeContent({ text, image, audio }, options = {}) {
   if (!text && !image && !audio) {
     throw new Error('Add at least one signal before requesting an analysis.');
   }
 
-  if (USE_MOCK) {
+  const useMock = options.useMock !== undefined ? options.useMock : USE_MOCK;
+  const baseUrl = options.baseUrl || BASE_URL;
+
+  if (useMock) {
     await new Promise((resolve) => setTimeout(resolve, MOCK_DELAY_MS));
     if (text?.toLowerCase().includes('[error]')) {
       throw new Error('The mock service could not process this sample. Remove [error] and try again.');
@@ -271,37 +390,56 @@ export async function analyzeContent({ text, image, audio }) {
     return normalizeAnalysisResult(createMockResult({ text, image, audio }));
   }
 
-  if (!BASE_URL) {
-    // Backend not connected yet – return a sentinel so the UI shows the
-    // "not connected" state rather than a generic error.
+  if (!baseUrl) {
     throw new NotConnectedError();
   }
 
   const form = new FormData();
-  if (text)  form.append('text',  text);
+  if (text) form.append('text', text);
   if (image) form.append('image', image);
   if (audio) form.append('audio', audio);
 
-  const response = await fetch(`${BASE_URL}/analyze`, {
-    method: 'POST',
-    body: form,
-    // Add auth headers here once the backend contract is finalised.
-  });
+  const response = await fetchWithTimeout(
+    `${baseUrl}/analyze`,
+    {
+      method: 'POST',
+      body: form,
+    },
+    options.timeoutMs
+  );
 
   if (!response.ok) {
-    const detail = await response.text().catch(() => response.statusText);
-    throw new Error(`Analysis failed (${response.status}): ${detail}`);
+    let errorData = null;
+    try {
+      errorData = await response.json();
+    } catch {
+      // Body was not JSON
+    }
+    const message = mapBackendError(response.status, errorData);
+    throw new Error(message);
   }
 
-  return normalizeAnalysisResult(await response.json());
+  const json = await response.json();
+  return normalizeAnalysisResult(json);
 }
 
-export async function coachText({ text, style }) {
+/**
+ * Sends text to the conversation coach endpoint to reframe delivery.
+ *
+ * @param {{ text: string, style: string }} payload
+ * @param {{ useMock?: boolean, baseUrl?: string, timeoutMs?: number }} [options]
+ * @returns {Promise<CoachResult>}
+ * @throws {Error} with a user-friendly message
+ */
+export async function coachText({ text, style }, options = {}) {
   if (!text?.trim()) {
     throw new Error('Enter a sentence before using the conversation coach.');
   }
 
-  if (USE_MOCK) {
+  const useMock = options.useMock !== undefined ? options.useMock : USE_MOCK;
+  const baseUrl = options.baseUrl || BASE_URL;
+
+  if (useMock) {
     await new Promise((resolve) => setTimeout(resolve, MOCK_DELAY_MS));
     if (text.toLowerCase().includes('[error]')) {
       throw new Error('The mock coach could not process this sentence. Remove [error] and try again.');
@@ -309,28 +447,32 @@ export async function coachText({ text, style }) {
     return createMockCoachResult({ text, style });
   }
 
-  if (!BASE_URL) {
+  if (!baseUrl) {
     throw new NotConnectedError();
   }
 
-  const response = await fetch(`${BASE_URL}/coach`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text: text.trim(), style }),
-  });
+  const response = await fetchWithTimeout(
+    `${baseUrl}/coach`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: text.trim(), style }),
+    },
+    options.timeoutMs
+  );
 
   if (!response.ok) {
-    const detail = await response.text().catch(() => response.statusText);
-    throw new Error(`Coach request failed (${response.status}): ${detail}`);
+    let errorData = null;
+    try {
+      errorData = await response.json();
+    } catch {
+      // Body was not JSON
+    }
+    const message = mapBackendError(response.status, errorData);
+    throw new Error(message);
   }
 
-  return normalizeCoachResult(await response.json());
+  const json = await response.json();
+  return normalizeCoachResult(json);
 }
 
-/** Sentinel error thrown when BASE_URL is not configured. */
-export class NotConnectedError extends Error {
-  constructor() {
-    super('Analysis endpoint is not connected yet.');
-    this.name = 'NotConnectedError';
-  }
-}

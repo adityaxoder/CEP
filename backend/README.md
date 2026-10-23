@@ -61,3 +61,54 @@ uv run alembic upgrade head
 ```
 
 Each developer has a separate local SQLite file at `data/emotioniq.db` by default. Do not commit database files, `.env`, uploaded media, provider keys, or model caches.
+
+## API Endpoints (Person 3 Implementation)
+
+### `GET /health`
+Returns readiness status of API service and each provider:
+```json
+{
+  "status": "ok",
+  "version": "0.1.0",
+  "models": {
+    "text": "ready",
+    "image": "ready",
+    "audio": "ready",
+    "coach": "ready"
+  }
+}
+```
+
+### `POST /analyze`
+Content type: `multipart/form-data`.
+- `text` (string, optional, max 10,000 characters)
+- `image` (file, optional, JPEG/PNG/WEBP, max 5 MB)
+- `audio` (file, optional, MP3/WAV/OGG/WEBM, max 10 MB)
+
+Validation guarantees:
+- At least one input signal must be supplied; empty requests rejected with HTTP 422 `EMPTY_REQUEST`.
+- Upload size limits strictly enforced (HTTP 413 `UPLOAD_TOO_LARGE`).
+- MIME types and file signature verification (HTTP 415 `UNSUPPORTED_MEDIA_TYPE` and HTTP 422 `MALFORMED_IMAGE` / `MALFORMED_AUDIO`).
+- Returns non-diagnostic observations, cue confidence scores, mismatch detection across modalities, and conversational suggestions.
+
+### `POST /coach`
+Content type: `application/json`.
+```json
+{
+  "text": "Please send the report.",
+  "style": "formal"
+}
+```
+Supported styles: `light`, `strict`, `happy`, `sad`, `formal`, `informal`.
+Returns reframed wording while strictly preserving the original intent.
+
+## Running Tests
+
+From `backend/`:
+
+```bash
+uv run pytest
+# or with virtualenv:
+.venv/Scripts/pytest
+```
+
