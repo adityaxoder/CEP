@@ -116,11 +116,10 @@ class GeminiTextProvider(TextEmotionProvider):
             description = raw_description.strip()[:600]
 
             label = CATEGORY_LABELS[category]
-            explanation = f"AI wording estimate: {label.lower()}. This describes the sentence's wording, not the writer's true feelings."
             return ModalityResult(
                 label=label,
                 confidence=None,
-                explanation=explanation,
+                explanation="",
                 all_scores=None,
                 method="AI API",
                 evidence=evidence,

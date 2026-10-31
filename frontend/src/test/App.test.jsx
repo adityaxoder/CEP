@@ -16,7 +16,7 @@ async function submitText(user, text) {
   const textInput = screen.getByLabelText('Text message');
   await user.clear(textInput);
   fireEvent.change(textInput, { target: { value: text } });
-  const consent = screen.getByRole('checkbox', { name: 'I understand.' });
+  const consent = screen.getByRole('checkbox', { name: 'Proceed' });
   if (!consent.checked) await user.click(consent);
   const submitButton = screen.getByRole('button', { name: /Analyse text/i });
   expect(textInput).toHaveValue(text);
@@ -48,7 +48,7 @@ describe('application workflows', () => {
     await user.type(screen.getByLabelText('Text message'), 'Thanks for your help.');
     expect(submitButton).toBeDisabled();
 
-    await user.click(screen.getByRole('checkbox', { name: 'I understand.' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Proceed' }));
     expect(submitButton).toBeEnabled();
   });
 

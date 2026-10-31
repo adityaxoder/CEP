@@ -4,7 +4,7 @@
 
 Prepare a small classroom demo whose frontend and backend run on the local Mac. Text wording analysis uses the Google Gemini API and therefore needs internet access and a backend-only API key. The coach uses local deterministic templates. Image and audio are curated local sample galleries with human-written annotations, not automatic recognition. Results must not be described as reliable readings of a person's internal mood.
 
-This is a teaching prototype, not a psychological or clinical tool. Text submitted for analysis is sent to Google's AI service; disclose this before submission and do not use sensitive or private text. Request stateless API interactions and do not save the original input text or uploaded media. Keep completed analysis outputs in a local database, scoped to the account that created them and deletable from the UI. Demo account records may be stored in the local development database with passwords hashed; they are only for the local classroom demo.
+This is a teaching prototype, not a psychological or clinical tool. Text submitted for analysis is sent to Google's AI service; disclose this before submission and do not use sensitive or private text. Keep submitted text, media filenames, and completed analysis outputs in local history scoped to the account that created them and deletable from the UI. Do not save uploaded image or audio file contents. Demo account records may be stored in the local development database with passwords hashed; they are only for the local classroom demo.
 
 ### What each feature will do
 
@@ -24,7 +24,7 @@ This is a teaching prototype, not a psychological or clinical tool. Text submitt
 - [ ] Use the feature table above as the product contract. Do not promise automatic facial emotion recognition or audio mood recognition.
 - [ ] Disclose before text submission that the text is sent to Google Gemini. Do not claim `store=false` means Google never processes or retains data; explain that service terms apply.
 - [ ] Update the UI notice and demo narration to explain Gemini wording estimates, local coach templates, and human-authored image/audio sample labels. None reveal anyone's true feelings.
-- [ ] Save each completed analysis result in local SQLite history scoped to the signed-in account. Support loading history after sign-in, deleting individual entries, and clearing that account's full history. Do not persist original input text or uploaded media.
+- [ ] Save each completed analysis result plus its submitted text and media filenames in local SQLite history scoped to the signed-in account. Support loading history after sign-in, showing input beside output, deleting individual entries, and clearing that account's full history. Do not persist uploaded image or audio file contents.
 
 **Done when:** the task list, UI wording, and walkthrough all make the same limited claims.
 

@@ -25,7 +25,7 @@ describe('Multimodal analysis flows and full user states', () => {
     const imageFile = new File(['image-content'], 'happy-face.png', { type: 'image/png' });
     fireEvent.change(fileInput, { target: { files: [imageFile] } });
 
-    const consent = screen.getByRole('checkbox', { name: 'I understand.' });
+    const consent = screen.getByRole('checkbox', { name: 'Proceed' });
     await user.click(consent);
 
     const submitBtn = screen.getByRole('button', { name: /Analyse image/i });
@@ -49,7 +49,7 @@ describe('Multimodal analysis flows and full user states', () => {
     const audioFile = new File(['audio-content'], 'happy-voice.mp3', { type: 'audio/mpeg' });
     fireEvent.change(fileInput, { target: { files: [audioFile] } });
 
-    const consent = screen.getByRole('checkbox', { name: 'I understand.' });
+    const consent = screen.getByRole('checkbox', { name: 'Proceed' });
     await user.click(consent);
 
     const submitBtn = screen.getByRole('button', { name: /Analyse voice/i });
@@ -83,7 +83,7 @@ describe('Multimodal analysis flows and full user states', () => {
     fireEvent.change(audioInput, { target: { files: [audioFile] } });
 
     // Confirm consent
-    const consent = screen.getByRole('checkbox', { name: 'I understand.' });
+    const consent = screen.getByRole('checkbox', { name: 'Proceed' });
     await user.click(consent);
 
     const submitBtn = screen.getByRole('button', { name: /Analyse multimodal/i });
@@ -111,7 +111,7 @@ describe('Multimodal analysis flows and full user states', () => {
     // Consent gating: submit button disabled without consent
     const textInput = screen.getByLabelText('Text message');
     await user.type(textInput, 'Looking forward to our sync.');
-    const consent = screen.getByRole('checkbox', { name: 'I understand.' });
+    const consent = screen.getByRole('checkbox', { name: 'Proceed' });
     const submitBtn = screen.getByRole('button', { name: /Analyse text/i });
     expect(submitBtn).toBeDisabled();
 
@@ -136,7 +136,7 @@ describe('Multimodal analysis flows and full user states', () => {
     const textInput2 = screen.getByLabelText('Text message');
     await user.clear(textInput2);
     fireEvent.change(textInput2, { target: { value: '[error] failed run' } });
-    const consent2 = screen.getByRole('checkbox', { name: 'I understand.' });
+    const consent2 = screen.getByRole('checkbox', { name: 'Proceed' });
     if (!consent2.checked) await user.click(consent2);
     const submitBtn2 = screen.getByRole('button', { name: /Analyse text/i });
     expect(submitBtn2).toBeEnabled();

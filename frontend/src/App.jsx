@@ -17,6 +17,7 @@ import { clearAnalysisHistory, deleteAnalysisHistoryEntry, getAnalysisHistory } 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [accessToken, setAccessToken] = useState(null);
+  const [currentUsername, setCurrentUsername] = useState('');
   const [currentPage, setCurrentPage] = useState(DEFAULT_PAGE);
   const [history, setHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -86,6 +87,7 @@ function App() {
     historyRequestId.current += 1;
     setIsAuthenticated(false);
     setAccessToken(null);
+    setCurrentUsername('');
     setCurrentPage(DEFAULT_PAGE);
     setHistory([]);
     setHistoryError('');
@@ -97,6 +99,7 @@ function App() {
       ? await signupWithUsername(username, password, confirmPassword)
       : await loginWithUsername(username, password);
     setAccessToken(result.access_token);
+    setCurrentUsername(result.username || username);
     setIsAuthenticated(true);
   }, []);
 
@@ -109,7 +112,7 @@ function App() {
       {/* Skip-to-content for keyboard / screen reader users */}
       <a href="#main-content" className="skip-link">Skip to main content</a>
 
-      <Header currentPage={currentPage} onNavigate={navigateTo} onLogout={signOut} />
+      <Header currentPage={currentPage} onNavigate={navigateTo} onLogout={signOut} username={currentUsername} />
 
       <div className="page-wrapper">
         {currentPage === 'history' ? (

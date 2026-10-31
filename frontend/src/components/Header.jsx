@@ -4,19 +4,17 @@
  */
 import {
   Activity,
-  Brain,
   Clock,
   FileText,
   Image as ImageIcon,
   LogOut,
   Mic,
-  Plus,
-  Settings,
   Sparkles,
   WandSparkles,
 } from 'lucide-react';
+import emotionLogo from '../../../image.png';
 
-export function Header({ currentPage, onNavigate, onLogout }) {
+export function Header({ currentPage, onNavigate, onLogout, username }) {
   const navItems = [
     { id: 'text', label: 'Text', icon: FileText },
     { id: 'image', label: 'Image', icon: ImageIcon },
@@ -25,7 +23,6 @@ export function Header({ currentPage, onNavigate, onLogout }) {
     { id: 'coach', label: 'Coach', icon: WandSparkles },
     { id: 'analysis', label: 'Analysis', icon: Activity },
     { id: 'history', label: 'History', icon: Clock },
-    { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
   return (
@@ -38,10 +35,7 @@ export function Header({ currentPage, onNavigate, onLogout }) {
           onClick={() => onNavigate('text')}
           aria-label="EmotionIQ home"
         >
-          <span className="brand-icon" aria-hidden="true">
-            <Brain size={18} />
-          </span>
-          <span className="brand-name">EmotionIQ</span>
+          <img className="brand-logo" src={emotionLogo} alt="EmotionIQ" />
         </button>
 
         {/* Tab nav */}
@@ -64,15 +58,10 @@ export function Header({ currentPage, onNavigate, onLogout }) {
         </nav>
 
         <div className="header-actions">
-          <button
-            type="button"
-            className="btn-primary"
-            onClick={() => onNavigate('multimodal')}
-            aria-label="New analysis"
-          >
-            <Plus size={14} aria-hidden="true" />
-            New Analysis
-          </button>
+          <div className="user-badge" aria-label={`Signed in as ${username || 'user'}`} title={`Signed in as ${username || 'user'}`}>
+            <span className="user-badge-avatar" aria-hidden="true">{username?.charAt(0)?.toUpperCase() || 'U'}</span>
+            <span className="user-badge-name">{username || 'User'}</span>
+          </div>
           <button type="button" className="btn-ghost header-logout" onClick={onLogout}>
             <LogOut size={14} aria-hidden="true" />
             Logout

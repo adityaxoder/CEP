@@ -116,7 +116,7 @@ export function ModalityCard({ modality, data, missing }) {
       <div className="modality-label-row">
         <span className={`modality-label-badge ${hasConfidence ? badgeClass : 'badge--blue'}`}>{data.label}</span>
         <span className="confidence-label">
-          {data.method === 'rule-based' ? 'Rule-based cue' : data.method ? 'AI wording estimate' : hasConfidence ? confidenceNote : ''}
+          {data.method === 'rule-based' ? 'Rule-based cue' : modality === 'text' ? '' : hasConfidence ? confidenceNote : ''}
         </span>
       </div>
 
@@ -125,7 +125,7 @@ export function ModalityCard({ modality, data, missing }) {
       )}
 
       {/* Explanation */}
-      {data.explanation && (
+      {data.explanation && modality !== 'text' && (
         <p className="modality-explanation">{data.explanation}</p>
       )}
     </div>

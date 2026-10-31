@@ -244,6 +244,11 @@ async def analyze(
         user_id=user.id,
         request_id=response.requestId,
         provided={"text": has_text, "image": has_image, "audio": has_audio},
+        inputs={
+            "text": trimmed_text if has_text else None,
+            "imageName": image.filename[:255] if has_image and image and image.filename else None,
+            "audioName": audio.filename[:255] if has_audio and audio and audio.filename else None,
+        },
         result=response.model_dump(mode="json"),
     ))
     db.commit()
@@ -267,6 +272,7 @@ def list_analysis_history(
             "requestId": record.request_id,
             "createdAt": record.created_at.isoformat(),
             "provided": record.provided,
+            "inputs": record.inputs or {},
             "result": record.result,
         }
         for record in records

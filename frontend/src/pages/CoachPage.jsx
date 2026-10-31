@@ -120,7 +120,7 @@ export function CoachPage({ accessToken }) {
             </div>
           )}
 
-          <ConsentNotice checked={consented} onConsent={setConsented} hasText />
+          <ConsentNotice checked={consented} onConsent={setConsented} />
 
           <div className="coach-actions">
             <button type="submit" className="analyze-btn" disabled={!canSubmit}>

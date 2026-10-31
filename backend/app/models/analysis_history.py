@@ -18,4 +18,5 @@ class AnalysisHistory(Base):
     request_id: Mapped[str] = mapped_column(String(64), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.current_timestamp(), nullable=False)
     provided: Mapped[dict[str, bool]] = mapped_column(JSON, nullable=False)
+    inputs: Mapped[dict[str, object] | None] = mapped_column(JSON, nullable=True)
     result: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False)

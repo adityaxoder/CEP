@@ -21,14 +21,6 @@ export function ResultsPanel({ result, provided, onStartNew }) {
       </div>
       <div className="section-card-body results-stack">
 
-        {/* Disclaimer */}
-        <div className="results-disclaimer" role="note">
-          <AlertTriangle size={13} className="notice-icon" aria-hidden="true" />
-          {provided?.text
-            ? <>Text results are <strong>AI-generated wording estimates</strong>, not proof of what someone truly feels. Review the evidence and surrounding context.</>
-            : <>Displayed cues are not proof of what someone truly feels.</>}
-        </div>
-
         {/* Modality cards — 3-col grid */}
         <div className="results-modality-grid">
           <ModalityCard modality="text"  data={modalities.text}  missing={!provided.text} />

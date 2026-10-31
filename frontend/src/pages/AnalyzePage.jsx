@@ -20,7 +20,7 @@ import { useAnalysis } from '../hooks/useAnalysis';
 const TAB_CONTENT = {
   text: {
     label: 'Text analysis',
-    description: 'Send a message for an AI wording-cue estimate. This does not identify anyone’s real feelings.',
+    description: '',
     icon: FileText,
   },
   image: {
@@ -112,9 +112,8 @@ export function AnalyzePage({ activeTab, selectedResult, onTabChange, onAnalysis
     <main id="main-content" className="workspace-page">
       <div className="workspace-heading">
         <div>
-          <span className="workspace-kicker">BRAINIACCONVO WORKSPACE</span>
           <h1>{isResultsTab ? 'Analysis results' : content.label}</h1>
-          <p>{isResultsTab ? 'Review the latest estimate across the signals you provided.' : content.description}</p>
+          {(isResultsTab || content.description) && <p>{isResultsTab ? 'Review the latest estimate across the signals you provided.' : content.description}</p>}
         </div>
         <div className="workspace-count">{isResultsTab ? '05' : `0${['text', 'image', 'voice', 'multimodal'].indexOf(activeTab) + 1}`} / 05</div>
       </div>
@@ -136,7 +135,7 @@ export function AnalyzePage({ activeTab, selectedResult, onTabChange, onAnalysis
             <div className="analysis-mode-icon"><ModeIcon size={20} aria-hidden="true" /></div>
             <div>
               <h2>Provide your {activeTab === 'multimodal' ? 'signals' : activeTab}</h2>
-              <p>{activeTab === 'multimodal' ? 'Add any combination of inputs. Missing modalities will be skipped.' : 'Only this modality will be sent for analysis.'}</p>
+              {activeTab === 'multimodal' && <p>Add any combination of inputs. Missing modalities will be skipped.</p>}
             </div>
           </div>
 
@@ -153,15 +152,13 @@ export function AnalyzePage({ activeTab, selectedResult, onTabChange, onAnalysis
             {(activeTab === 'voice' || activeTab === 'multimodal') && <VoiceInput file={audioFile} onFile={setAudioFile} onError={setAudioError} />}
           </div>
 
-          {signalCount === 0 && activeTab !== 'multimodal' && status === 'idle' && (
+          {signalCount === 0 && ['image', 'voice'].includes(activeTab) && status === 'idle' && (
             <div className="empty-input-guidance" role="status" aria-live="polite">
               <Info size={14} aria-hidden="true" />
               <span>
-                {activeTab === 'text'
-                  ? 'Enter a message to see an estimate of wording cues here.'
-                  : activeTab === 'image'
-                    ? 'Choose an image to see an estimate of visible cues here.'
-                    : 'Choose a recording to see an estimate of vocal delivery here.'}
+                {activeTab === 'image'
+                  ? 'Choose an image to see an estimate of visible cues here.'
+                  : 'Choose a recording to see an estimate of vocal delivery here.'}
               </span>
             </div>
           )}
@@ -173,7 +170,7 @@ export function AnalyzePage({ activeTab, selectedResult, onTabChange, onAnalysis
             </div>
           )}
 
-          <ConsentNotice checked={consented} onConsent={setConsented} hasText={Boolean(text.trim())} savesAnalysis />
+          <ConsentNotice checked={consented} onConsent={setConsented} />
           <form onSubmit={handleSubmit} className="analysis-form">
             <button type="submit" className="analyze-btn" disabled={!canSubmit} aria-describedby={!canSubmit ? 'submit-hint' : undefined}>
               {status === 'loading' ? <><Loader2 size={16} className="spin" /> Analysing…</> : <><Sparkles size={16} /> Analyse {activeTab}</>}

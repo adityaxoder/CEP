@@ -14,7 +14,7 @@ from app.models.analysis_history import AnalysisHistory
 from app.services.auth_service import hash_password
 from app.services.text_service import get_text_readiness
 from app.services.coach_service import get_coach_readiness
-from sqlalchemy import select, update
+from sqlalchemy import inspect, select, text, update
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -54,6 +54,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         """Create local schema and migrate existing email logins to usernames."""
         resolved_settings.ensure_sqlite_database_directory()
         Base.metadata.create_all(bind=engine)
+        history_columns = {column["name"] for column in inspect(engine).get_columns("analysis_history")}
+        if "inputs" not in history_columns:
+            with engine.begin() as connection:
+                connection.execute(text("ALTER TABLE analysis_history ADD COLUMN inputs JSON"))
         with SessionLocal() as session:
             for old_login, username in (("vedant@gmail.com", "vedant"), ("aditya@gmail.com", "aditya")):
                 session.execute(

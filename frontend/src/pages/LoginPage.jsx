@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { ArrowRight, Check, LockKeyhole, UserRound } from 'lucide-react';
+import { ArrowRight, LockKeyhole, UserRound } from 'lucide-react';
+import emotionLogo from '../../../image.png';
 
 export function LoginPage({ onLogin }) {
   const [mode, setMode] = useState('login');
@@ -39,26 +40,16 @@ export function LoginPage({ onLogin }) {
 
   return (
     <main className="auth-page" id="main-content">
-      <section className="auth-visual" aria-label="BrainiacConvo overview">
+      <section className="auth-visual" aria-label="EmotionIQ logo">
         <div className="auth-visual-top">
-          <span className="auth-brand-name">BrainiacConvo</span>
-        </div>
-
-        <div className="auth-visual-copy">
-          <span className="auth-eyebrow">COMMUNICATION INTELLIGENCE</span>
-          <p>Bring text, voice, and visual cues into one thoughtful analysis workspace.</p>
-        </div>
-
-        <div className="auth-visual-footer">
-          <span><Check size={14} aria-hidden="true" /> Private by default</span>
-          <span><Check size={14} aria-hidden="true" /> Estimates, not diagnoses</span>
+          <img className="auth-logo" src={emotionLogo} alt="EmotionIQ" />
         </div>
       </section>
 
       <section className="auth-panel" aria-label={isSignup ? 'Create a BrainiacConvo workspace' : 'Sign in to BrainiacConvo'}>
         <div className="auth-form-wrap">
           <div className="auth-mobile-brand">
-            <span className="auth-brand-name">BrainiacConvo</span>
+            <img className="auth-logo auth-logo--mobile" src={emotionLogo} alt="EmotionIQ" />
           </div>
 
           <div className="auth-heading">

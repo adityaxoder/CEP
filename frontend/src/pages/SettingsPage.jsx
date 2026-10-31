@@ -19,8 +19,8 @@ export function SettingsPage({ historyCount, historyLoading, historyError, onCle
           <div className="section-card-body settings-copy">
             <p>Analysis results are stored in this app’s local database and separated by username. Text analysis and coach rewrites are processed by Google’s AI service; its service terms apply. Do not submit sensitive or private text.</p>
             <ul className="settings-list">
-              <li><Check size={14} aria-hidden="true" /> Analysis outputs are saved until you delete them.</li>
-              <li><Check size={14} aria-hidden="true" /> Uploaded image and audio files are not saved in history.</li>
+              <li><Check size={14} aria-hidden="true" /> Submitted text, media filenames, and analysis outputs are saved until you delete them.</li>
+              <li><Check size={14} aria-hidden="true" /> Uploaded image and audio contents are not saved in history.</li>
               <li><Check size={14} aria-hidden="true" /> Coach rewrites use the style you select.</li>
               <li><Check size={14} aria-hidden="true" /> Results are wording estimates, not facts about anyone’s feelings.</li>
             </ul>
