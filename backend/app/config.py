@@ -60,6 +60,7 @@ class Settings(BaseSettings):
 
     database_url: str = "sqlite:///./data/emotioniq.db"
     auth_enabled: bool = True
+    jwt_signing_secret: str = "local-demo-only-change-before-deployment"
 
     @field_validator("hf_api_token", mode="before")
     @classmethod

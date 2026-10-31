@@ -6,7 +6,7 @@ import io
 import logging
 from typing import cast
 
-from fastapi import APIRouter, File, Form, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
 from PIL import Image
 
 from app.api.schemas import (
@@ -18,6 +18,7 @@ from app.api.schemas import (
     ModelReadiness,
     ReadinessState,
 )
+from app.api.auth import require_user
 from app.config import Settings
 from app.infrastructure.errors import ApiError, request_id_for
 from app.models.audio import is_valid_audio_signature
@@ -75,6 +76,7 @@ async def health(request: Request) -> HealthResponse:
 @router.post("/analyze", response_model=AnalysisResponse, tags=["analysis"])
 async def analyze(
     request: Request,
+    _user=Depends(require_user),
     text: str | None = Form(None),
     image: UploadFile | None = File(None),
     audio: UploadFile | None = File(None),
@@ -235,7 +237,7 @@ async def analyze(
 
 
 @router.post("/coach", response_model=CoachResponse, tags=["coach"])
-async def coach(payload: CoachRequest, request: Request) -> CoachResponse:
+async def coach(payload: CoachRequest, request: Request, _user=Depends(require_user)) -> CoachResponse:
     """Reframe a single message toward a selected tone while preserving intent."""
     settings = cast(Settings, request.app.state.settings)
     stripped = payload.text.strip()

@@ -9,7 +9,7 @@
 import { useState, useCallback } from 'react';
 import { analyzeContent, NotConnectedError } from '../api/emotionClient';
 
-export function useAnalysis() {
+export function useAnalysis(accessToken) {
   const [status, setStatus]   = useState('idle');   // idle | loading | success | error | not-connected
   const [result, setResult]   = useState(null);
   const [errorMsg, setError]  = useState('');
@@ -19,7 +19,7 @@ export function useAnalysis() {
     setResult(null);
     setError('');
     try {
-      const data = await analyzeContent(payload);
+      const data = await analyzeContent(payload, { accessToken });
       setResult(data);
       setStatus('success');
       return data;
@@ -31,7 +31,7 @@ export function useAnalysis() {
         setStatus('error');
       }
     }
-  }, []);
+  }, [accessToken]);
 
   const reset = useCallback(() => {
     setStatus('idle');

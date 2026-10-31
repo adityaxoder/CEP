@@ -11,7 +11,7 @@ const STYLE_OPTIONS = [
   { value: 'informal', label: 'Informal', description: 'Natural and casual' },
 ];
 
-export function CoachPage() {
+export function CoachPage({ accessToken }) {
   const [text, setText] = useState('');
   const [style, setStyle] = useState('light');
   const [status, setStatus] = useState('idle');
@@ -39,7 +39,7 @@ export function CoachPage() {
     setStatus('loading');
 
     try {
-      const nextResult = await coachText(payload);
+      const nextResult = await coachText(payload, { accessToken });
       setResult(nextResult);
       setStatus('success');
     } catch (error) {

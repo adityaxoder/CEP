@@ -1,12 +1,38 @@
 import { useState } from 'react';
-import { ArrowRight, Check, LockKeyhole, Mail, UserRound } from 'lucide-react';
+import { ArrowRight, Check, LockKeyhole, Mail } from 'lucide-react';
 
 export function LoginPage({ onLogin }) {
   const [mode, setMode] = useState('login');
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
-    onLogin();
+    setError('');
+    setIsSubmitting(true);
+    const data = new FormData(event.currentTarget);
+    const email = String(data.get('email') || '').trim();
+    const password = String(data.get('password') || '');
+    const confirmPassword = String(data.get('confirmPassword') || '');
+
+    if (!email || !password.trim()) {
+      setError('Enter your email and password.');
+      setIsSubmitting(false);
+      return;
+    }
+    if (isSignup && password !== confirmPassword) {
+      setError('Passwords do not match.');
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      await onLogin({ email, password, confirmPassword, mode });
+    } catch (submitError) {
+      setError(submitError.message || 'Could not sign in. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   const isSignup = mode === 'signup';
@@ -42,26 +68,16 @@ export function LoginPage({ onLogin }) {
           </div>
 
           <div className="auth-mode-tabs" role="tablist" aria-label="Account access">
-            <button type="button" role="tab" aria-selected={!isSignup} className={!isSignup ? 'auth-mode-tab auth-mode-tab--active' : 'auth-mode-tab'} onClick={() => setMode('login')}>Sign in</button>
-            <button type="button" role="tab" aria-selected={isSignup} className={isSignup ? 'auth-mode-tab auth-mode-tab--active' : 'auth-mode-tab'} onClick={() => setMode('signup')}>Sign up</button>
+            <button type="button" role="tab" aria-selected={!isSignup} className={!isSignup ? 'auth-mode-tab auth-mode-tab--active' : 'auth-mode-tab'} onClick={() => { setError(''); setMode('login'); }}>Sign in</button>
+            <button type="button" role="tab" aria-selected={isSignup} className={isSignup ? 'auth-mode-tab auth-mode-tab--active' : 'auth-mode-tab'} onClick={() => { setError(''); setMode('signup'); }}>Sign up</button>
           </div>
 
           <form className="auth-form" onSubmit={handleSubmit}>
-            {isSignup && (
-              <label className="auth-field">
-                <span>Name</span>
-                <span className="auth-input-wrap">
-                  <UserRound size={16} aria-hidden="true" />
-                  <input id="name-input" type="text" name="name" placeholder="Your name" autoComplete="name" />
-                </span>
-              </label>
-            )}
-
             <label className="auth-field" htmlFor="email-input">
               <span>Email</span>
               <span className="auth-input-wrap">
                 <Mail size={16} aria-hidden="true" />
-                <input id="email-input" type="email" name="email" placeholder="Enter anything" autoComplete="email" />
+                <input id="email-input" type="email" name="email" placeholder="name@example.com" autoComplete="email" required />
               </span>
             </label>
 
@@ -69,7 +85,7 @@ export function LoginPage({ onLogin }) {
               <span>Password</span>
               <span className="auth-input-wrap">
                 <LockKeyhole size={16} aria-hidden="true" />
-                <input id="password-input" type="password" name="password" placeholder="Enter anything" autoComplete={isSignup ? 'new-password' : 'current-password'} />
+                <input id="password-input" type="password" name="password" placeholder="Enter password" autoComplete={isSignup ? 'new-password' : 'current-password'} required />
               </span>
             </label>
 
@@ -78,16 +94,19 @@ export function LoginPage({ onLogin }) {
                 <span>Confirm password</span>
                 <span className="auth-input-wrap">
                   <LockKeyhole size={16} aria-hidden="true" />
-                  <input id="confirm-password-input" type="password" name="confirmPassword" placeholder="Enter anything" autoComplete="new-password" />
+                  <input id="confirm-password-input" type="password" name="confirmPassword" placeholder="Confirm password" autoComplete="new-password" required />
                 </span>
               </label>
             )}
 
-            <button className="auth-submit" type="submit">
+            {error && <p className="auth-error" role="alert">{error}</p>}
+            <button className="auth-submit" type="submit" disabled={isSubmitting}>
               {isSignup ? 'Create demo account' : 'Login'}
-              <ArrowRight size={16} aria-hidden="true" />
+              {!isSubmitting && <ArrowRight size={16} aria-hidden="true" />}
             </button>
           </form>
+
+          {!isSignup && <p className="auth-demo-note">Local demo account: vedant@gmail.com · password: 123</p>}
 
         </div>
       </section>

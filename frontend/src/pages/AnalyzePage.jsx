@@ -40,7 +40,7 @@ const TAB_CONTENT = {
   },
 };
 
-export function AnalyzePage({ activeTab, selectedResult, onTabChange, onAnalysisComplete, onResultReset }) {
+export function AnalyzePage({ activeTab, selectedResult, onTabChange, onAnalysisComplete, onResultReset, accessToken }) {
   const [text, setText] = useState('');
   const [imageFile, setImageFile] = useState(null);
   const [audioFile, setAudioFile] = useState(null);
@@ -48,7 +48,7 @@ export function AnalyzePage({ activeTab, selectedResult, onTabChange, onAnalysis
   const [audioError, setAudioError] = useState('');
   const [consented, setConsented] = useState(false);
   const [lastPayload, setLastPayload] = useState(null);
-  const { status, result, errorMsg, analyze, reset } = useAnalysis();
+  const { status, result, errorMsg, analyze, reset } = useAnalysis(accessToken);
 
   const isResultsTab = activeTab === 'analysis';
   const content = TAB_CONTENT[activeTab] || TAB_CONTENT.text;

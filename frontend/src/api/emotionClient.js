@@ -404,6 +404,7 @@ export async function analyzeContent({ text, image, audio }, options = {}) {
     {
       method: 'POST',
       body: form,
+      headers: options.accessToken ? { Authorization: `Bearer ${options.accessToken}` } : {},
     },
     options.timeoutMs
   );
@@ -455,7 +456,10 @@ export async function coachText({ text, style }, options = {}) {
     `${baseUrl}/coach`,
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(options.accessToken ? { Authorization: `Bearer ${options.accessToken}` } : {}),
+      },
       body: JSON.stringify({ text: text.trim(), style }),
     },
     options.timeoutMs

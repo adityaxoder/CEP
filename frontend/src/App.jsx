@@ -11,9 +11,11 @@ import { HistoryPage } from './pages/HistoryPage';
 import { LoginPage } from './pages/LoginPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { DEFAULT_PAGE, normalizePage } from './state/appState';
+import { loginWithEmail, signupWithEmail } from './api/authClient';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [accessToken, setAccessToken] = useState(null);
   const [currentPage, setCurrentPage] = useState(DEFAULT_PAGE);
   const [history, setHistory] = useState([]);
   const [selectedResult, setSelectedResult] = useState(null);
@@ -34,13 +36,22 @@ function App() {
 
   const signOut = useCallback(() => {
     setIsAuthenticated(false);
+    setAccessToken(null);
     setCurrentPage(DEFAULT_PAGE);
     setHistory([]);
     setSelectedResult(null);
   }, []);
 
+  const authenticate = useCallback(async ({ email, password, confirmPassword, mode }) => {
+    const result = mode === 'signup'
+      ? await signupWithEmail(email, password, confirmPassword)
+      : await loginWithEmail(email, password);
+    setAccessToken(result.access_token);
+    setIsAuthenticated(true);
+  }, []);
+
   if (!isAuthenticated) {
-    return <LoginPage onLogin={() => setIsAuthenticated(true)} />;
+    return <LoginPage onLogin={authenticate} />;
   }
 
   return (
@@ -56,9 +67,10 @@ function App() {
         ) : currentPage === 'settings' ? (
           <SettingsPage historyCount={history.length} onClearHistory={clearHistory} onSignOut={signOut} />
         ) : currentPage === 'coach' ? (
-          <CoachPage />
+          <CoachPage accessToken={accessToken} />
         ) : (
           <AnalyzePage
+            accessToken={accessToken}
             activeTab={currentPage}
             selectedResult={selectedResult}
             onTabChange={navigateTo}
