@@ -31,15 +31,16 @@ class Settings(BaseSettings):
     max_audio_bytes: int = Field(default=10_485_760, gt=0)
 
     model_device: str = "cpu"
-    text_model_name: str = "j-hartmann/emotion-english-distilroberta-base"
+    text_model_name: str = "gemini-2.5-flash"
     image_model_name: str = "baseline"
     audio_model_name: str = "baseline"
-    coach_provider: str = "baseline"
+    coach_provider: str = "gemini"
 
     hf_api_token: str | None = Field(
         default=None,
         validation_alias=AliasChoices("hf_api_token", "hf_token", "huggingface_api_token", "huggingface_hub_token"),
     )
+    gemini_api_key: str | None = Field(default=None, repr=False)
     hf_inference_provider: str = Field(
         default="hf-inference",
         validation_alias=AliasChoices("hf_inference_provider", "hf_provider"),
@@ -54,7 +55,7 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("text_model_timeout_seconds", "text_provider_timeout", "model_timeout"),
     )
     allow_dev_baseline: bool = Field(
-        default=False,
+        default=True,
         validation_alias=AliasChoices("allow_dev_baseline", "enable_dev_baseline"),
     )
 
@@ -66,6 +67,14 @@ class Settings(BaseSettings):
     @classmethod
     def normalize_token(cls, value: str | None) -> str | None:
         """Strip whitespace from optional token and convert empty string to None."""
+        if value is None:
+            return None
+        stripped = str(value).strip()
+        return stripped if stripped else None
+
+    @field_validator("gemini_api_key", mode="before")
+    @classmethod
+    def normalize_gemini_key(cls, value: str | None) -> str | None:
         if value is None:
             return None
         stripped = str(value).strip()

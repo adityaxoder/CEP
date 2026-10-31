@@ -10,8 +10,11 @@ from app.db.base import Base
 from app.db.session import SessionLocal, engine
 from app.infrastructure.errors import RequestIdMiddleware, register_error_handlers
 from app.models.user import User
+from app.models.analysis_history import AnalysisHistory
 from app.services.auth_service import hash_password
-from sqlalchemy import select
+from app.services.text_service import get_text_readiness
+from app.services.coach_service import get_coach_readiness
+from sqlalchemy import select, update
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -26,7 +29,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         redoc_url=None,
     )
     application.state.settings = resolved_settings
-    application.state.model_readiness = DEFAULT_MODEL_READINESS.copy()
+    application.state.model_readiness = {
+        **DEFAULT_MODEL_READINESS,
+        "text": get_text_readiness(resolved_settings),
+        "coach": get_coach_readiness(resolved_settings),
+    }
 
     if resolved_settings.app_env == "development":
         application.add_middleware(
@@ -44,14 +51,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @application.on_event("startup")
     def initialize_local_accounts() -> None:
-        """Create the small local schema and seed the classroom demo account."""
+        """Create local schema and migrate existing email logins to usernames."""
         resolved_settings.ensure_sqlite_database_directory()
         Base.metadata.create_all(bind=engine)
         with SessionLocal() as session:
-            demo_email = "vedant@gmail.com"
-            if session.scalar(select(User).where(User.email == demo_email)) is None:
-                session.add(User(email=demo_email, password_hash=hash_password("123")))
-                session.commit()
+            for old_login, username in (("vedant@gmail.com", "vedant"), ("aditya@gmail.com", "aditya")):
+                session.execute(
+                    update(User).where(User.username == old_login).values(username=username)
+                )
+            if session.scalar(select(User).where(User.username == "vedant")) is None:
+                session.add(User(username="vedant", password_hash=hash_password("123")))
+            session.commit()
 
     return application
 

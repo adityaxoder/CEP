@@ -19,7 +19,7 @@
  *     {
  *       "requestId": "uuid",
  *       "modalities": {
- *         "text":  { "label": string, "confidence": number (0-1), "explanation": string } | null,
+ *         "text":  { "label": string, "confidence": number|null, "method": string, "evidence": string[], "explanation": string } | null,
  *         "image": { "label": string, "confidence": number (0-1), "explanation": string } | null,
  *         "audio": { "label": string, "confidence": number (0-1), "explanation": string } | null
  *       },
@@ -37,6 +37,8 @@
 
 export const DEFAULT_API_BASE_URL = 'http://localhost:8000';
 export const DEFAULT_REQUEST_TIMEOUT_MS = 15000;
+export const ANALYSIS_REQUEST_TIMEOUT_MS = 100000;
+export const COACH_REQUEST_TIMEOUT_MS = 100000;
 
 export const BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.VITE_USE_MOCK_ANALYSIS === 'false' ? DEFAULT_API_BASE_URL : null);
 export const USE_MOCK = import.meta.env.VITE_USE_MOCK_ANALYSIS !== 'false';
@@ -223,35 +225,29 @@ function normalizeCoachResult(data) {
   return {
     requestId: data?.requestId || createRequestId('coach'),
     originalText: data?.originalText || '',
-    style: data?.style || 'light',
+    style: data?.style || 'friendly',
     reframedText: data?.reframedText || '',
     explanation: data?.explanation || 'This is an optional wording estimate. Review it before sending.',
   };
 }
 
-function lowerFirst(text) {
-  return text.charAt(0).toLowerCase() + text.slice(1);
-}
-
 function createMockCoachResult({ text, style }) {
   const originalText = text.trim();
   const core = originalText.replace(/[.!?]+$/, '');
-  const subject = lowerFirst(core);
+  const sentence = `${core}${/[.!?]$/.test(originalText) ? originalText.slice(-1) : '.'}`;
   const reframes = {
-    light: `Just a quick note: ${subject} when you have a moment.`,
-    strict: `Please ${subject} promptly.`,
-    happy: `I'd be happy to help with this: ${subject}!`,
-    sad: `I'm feeling a little discouraged about this: ${subject}.`,
-    formal: `Please be advised that ${subject}. Your attention to this matter would be appreciated.`,
-    informal: `Hey, can we ${subject}?`,
+    friendly: `Just sharing: ${sentence}`,
+    formal: `Please note: ${sentence}`,
+    concise: `${core.replace(/\b(I just wanted to|I was wondering if|basically|actually|just|kind of|sort of)\s+/gi, '').replace(/\s+/g, ' ').trim()}.`,
+    empathetic: `I hear you. ${sentence}`,
   };
 
   return normalizeCoachResult({
     requestId: createRequestId('mock-coach'),
     originalText,
     style,
-    reframedText: reframes[style] || reframes.light,
-    explanation: `The sentence was adjusted toward a ${style} delivery while keeping the original intent as closely as possible.`,
+    reframedText: reframes[style] || reframes.friendly,
+    explanation: `A deterministic ${style} template was applied. Review the suggestion to make sure it preserves your intended meaning.`,
   });
 }
 
@@ -406,7 +402,7 @@ export async function analyzeContent({ text, image, audio }, options = {}) {
       body: form,
       headers: options.accessToken ? { Authorization: `Bearer ${options.accessToken}` } : {},
     },
-    options.timeoutMs
+    options.timeoutMs ?? ANALYSIS_REQUEST_TIMEOUT_MS
   );
 
   if (!response.ok) {
@@ -462,7 +458,7 @@ export async function coachText({ text, style }, options = {}) {
       },
       body: JSON.stringify({ text: text.trim(), style }),
     },
-    options.timeoutMs
+    options.timeoutMs ?? COACH_REQUEST_TIMEOUT_MS
   );
 
   if (!response.ok) {

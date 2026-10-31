@@ -1,30 +1,33 @@
 import { useState } from 'react';
 import { AlertCircle, Info, Loader2, RotateCcw, WandSparkles, WifiOff } from 'lucide-react';
 import { coachText, NotConnectedError } from '../api/emotionClient';
+import { ConsentNotice } from '../components/ConsentNotice';
 
 const STYLE_OPTIONS = [
-  { value: 'light', label: 'Light', description: 'Relaxed and easygoing' },
-  { value: 'strict', label: 'Strict', description: 'Direct and firm' },
-  { value: 'happy', label: 'Happy', description: 'Warm and upbeat' },
-  { value: 'sad', label: 'Sad', description: 'Gentle and concerned' },
-  { value: 'formal', label: 'Formal', description: 'Professional and polished' },
-  { value: 'informal', label: 'Informal', description: 'Natural and casual' },
+  { value: 'friendly', label: 'Friendly', description: 'Warm and approachable' },
+  { value: 'formal', label: 'Formal', description: 'Polite and polished' },
+  { value: 'concise', label: 'Concise', description: 'Brief and direct' },
+  { value: 'empathetic', label: 'Empathetic', description: 'Considerate and understanding' },
+  { value: 'professional', label: 'Professional', description: 'Clear for work or school' },
+  { value: 'assertive', label: 'Assertive', description: 'Confident but respectful' },
+  { value: 'diplomatic', label: 'Diplomatic', description: 'Tactful around disagreement' },
+  { value: 'casual', label: 'Casual', description: 'Relaxed and conversational' },
 ];
 
 export function CoachPage({ accessToken }) {
   const [text, setText] = useState('');
-  const [style, setStyle] = useState('light');
+  const [style, setStyle] = useState('');
+  const [consented, setConsented] = useState(false);
   const [status, setStatus] = useState('idle');
   const [result, setResult] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
   const [lastPayload, setLastPayload] = useState(null);
 
-  const canSubmit = Boolean(text.trim()) && status !== 'loading';
-  const selectedStyle = STYLE_OPTIONS.find((option) => option.value === style);
-
+  const canSubmit = Boolean(text.trim() && style && consented) && status !== 'loading';
   function reset() {
     setText('');
-    setStyle('light');
+    setStyle('');
+    setConsented(false);
     setStatus('idle');
     setResult(null);
     setErrorMsg('');
@@ -32,22 +35,20 @@ export function CoachPage({ accessToken }) {
   }
 
   async function submit(payload = { text: text.trim(), style }) {
-    if (!payload.text || status === 'loading') return;
+    if (!payload.text || !payload.style || !consented || status === 'loading') return;
     setLastPayload(payload);
     setResult(null);
     setErrorMsg('');
     setStatus('loading');
-
     try {
-      const nextResult = await coachText(payload, { accessToken });
-      setResult(nextResult);
+      setResult(await coachText(payload, { accessToken }));
       setStatus('success');
     } catch (error) {
       if (error instanceof NotConnectedError) {
         setStatus('not-connected');
         return;
       }
-      setErrorMsg(error.message || 'The coach could not reframe this sentence.');
+      setErrorMsg(error.message || 'The coach could not rewrite this sentence.');
       setStatus('error');
     }
   }
@@ -63,7 +64,7 @@ export function CoachPage({ accessToken }) {
         <div>
           <span className="workspace-kicker">BRAINIACCONVO COACH</span>
           <h1>Conversation Coach</h1>
-          <p>Rewrite one sentence in a tone that fits the moment without changing what you mean.</p>
+          <p>Choose how you want your sentence to sound. The writing assistant will rewrite it while keeping your meaning.</p>
         </div>
         <div className="workspace-count">06 / 06</div>
       </div>
@@ -72,8 +73,8 @@ export function CoachPage({ accessToken }) {
         <div className="analysis-workspace-header">
           <div className="analysis-mode-icon"><WandSparkles size={20} aria-hidden="true" /></div>
           <div>
-            <h2>Choose how it should sound</h2>
-            <p>Type a sentence, choose a style, and review the suggested reframe.</p>
+            <h2>Pick a style, then rewrite</h2>
+            <p>Only the style you select is used for the result.</p>
           </div>
         </div>
 
@@ -90,41 +91,40 @@ export function CoachPage({ accessToken }) {
               onChange={(event) => setText(event.target.value)}
               aria-describedby="coach-input-hint coach-char-count"
             />
-            <span id="coach-input-hint" className="coach-field-hint">The mock coach keeps your intent and changes the delivery.</span>
+            <span id="coach-input-hint" className="coach-field-hint">You can enter a sentence on any topic. Review the rewrite to make sure it still says what you mean.</span>
             <span id="coach-char-count" className="char-count">{text.length} / 1000 characters</span>
           </div>
 
           <fieldset className="coach-style-fieldset">
-            <legend>Desired style</legend>
+            <legend>How should it sound?</legend>
             <div className="coach-style-grid">
               {STYLE_OPTIONS.map((option) => (
-                <label key={option.value} className={`coach-style-option ${style === option.value ? 'coach-style-option--selected' : ''}`}>
+                <label key={option.value} className={`coach-style-option${style === option.value ? ' coach-style-option--selected' : ''}`}>
                   <input
                     type="radio"
                     name="coach-style"
                     value={option.value}
                     checked={style === option.value}
-                    onChange={(event) => setStyle(event.target.value)}
+                    onChange={() => setStyle(option.value)}
                   />
-                  <span>
-                    <strong>{option.label}</strong>
-                    <small>{option.description}</small>
-                  </span>
+                  <span><strong>{option.label}</strong><small>{option.description}</small></span>
                 </label>
               ))}
             </div>
           </fieldset>
 
-          {!text.trim() && status === 'idle' && (
+          {(!text.trim() || !style) && status === 'idle' && (
             <div className="empty-input-guidance" role="status" aria-live="polite">
               <Info size={14} aria-hidden="true" />
-              <span>Enter a sentence to see a {selectedStyle.label.toLowerCase()} reframe here.</span>
+              <span>Enter your sentence and choose one style to get started.</span>
             </div>
           )}
 
+          <ConsentNotice checked={consented} onConsent={setConsented} hasText />
+
           <div className="coach-actions">
             <button type="submit" className="analyze-btn" disabled={!canSubmit}>
-              {status === 'loading' ? <><Loader2 size={16} className="spin" /> Reframing...</> : <><WandSparkles size={16} /> Reframe sentence</>}
+              {status === 'loading' ? <><Loader2 size={16} className="spin" /> Rewriting...</> : <><WandSparkles size={16} /> Rewrite in this style</>}
             </button>
             {(text || result || status !== 'idle') && (
               <button type="button" className="reset-btn" onClick={reset}>
@@ -138,14 +138,14 @@ export function CoachPage({ accessToken }) {
           <section className="coach-result" aria-labelledby="coach-result-heading">
             <div className="coach-result-header">
               <div>
-                <span className="workspace-kicker">{selectedStyle.label.toUpperCase()} REFRAME</span>
-                <h2 id="coach-result-heading">Suggested wording</h2>
+                <span className="workspace-kicker">{STYLE_OPTIONS.find((option) => option.value === result.style)?.label || result.style} STYLE</span>
+                <h2 id="coach-result-heading">Your rewrite</h2>
               </div>
-              <span className="coach-result-badge">Estimate</span>
+              <span className="coach-result-badge">AI suggestion</span>
             </div>
+            <p className="coach-result-original"><strong>Original:</strong> {result.originalText}</p>
             <blockquote>{result.reframedText}</blockquote>
             <p className="coach-result-note">{result.explanation}</p>
-            <p className="coach-result-original"><strong>Original:</strong> {result.originalText}</p>
           </section>
         )}
       </section>
@@ -153,8 +153,8 @@ export function CoachPage({ accessToken }) {
       {status === 'not-connected' && (
         <div className="status-panel status-panel--warn" role="status" aria-live="polite">
           <WifiOff size={27} aria-hidden="true" />
-          <p className="status-title">Conversation Coach is not connected yet</p>
-          <p className="status-body">Set the backend API base URL or keep mock mode enabled to generate reframes.</p>
+          <p className="status-title">Conversation Coach is not connected</p>
+          <p className="status-body">Connect to the backend and check that its text service is configured.</p>
         </div>
       )}
 
@@ -162,7 +162,7 @@ export function CoachPage({ accessToken }) {
         <div className="status-panel status-panel--error" role="alert">
           <AlertCircle size={27} aria-hidden="true" />
           <p className="status-title">Coach request failed</p>
-          <p className="status-body">{errorMsg} Edit the sentence or reset it before trying again.</p>
+          <p className="status-body">{errorMsg}</p>
           <button type="button" className="btn-ghost" onClick={() => lastPayload && submit(lastPayload)} disabled={!lastPayload}>Try again</button>
         </div>
       )}

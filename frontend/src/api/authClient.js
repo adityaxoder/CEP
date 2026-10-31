@@ -24,10 +24,10 @@ async function submitAuth(path, payload) {
   return data;
 }
 
-export function loginWithEmail(email, password) {
-  return submitAuth('login', { email, password });
+export function loginWithUsername(username, password) {
+  return submitAuth('login', { username, password });
 }
 
-export function signupWithEmail(email, password, confirmPassword) {
-  return submitAuth('signup', { email, password, confirm_password: confirmPassword });
+export function signupWithUsername(username, password, confirmPassword) {
+  return submitAuth('signup', { username, password, confirm_password: confirmPassword });
 }

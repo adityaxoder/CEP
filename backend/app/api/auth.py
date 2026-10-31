@@ -20,7 +20,7 @@ bearer = HTTPBearer(auto_error=False)
 
 
 class Credentials(BaseModel):
-    email: str = Field(min_length=1, max_length=320)
+    username: str = Field(min_length=1, max_length=64)
     password: str = Field(min_length=1)
 
 
@@ -28,25 +28,25 @@ class SignupCredentials(Credentials):
     confirm_password: str = Field(min_length=1)
 
 
-def _email(value: str) -> str:
+def _username(value: str) -> str:
     normalized = value.strip().lower()
-    if not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", normalized):
-        raise HTTPException(status_code=422, detail="Enter a valid email address.")
+    if not re.fullmatch(r"[a-z0-9][a-z0-9._-]{0,63}", normalized):
+        raise HTTPException(status_code=422, detail="Use a username with letters, numbers, dots, underscores, or hyphens.")
     return normalized
 
 
 def _ensure_demo_user(db: Session) -> None:
-    email = "vedant@gmail.com"
-    if db.scalar(select(User).where(User.email == email)) is None:
-        db.add(User(email=email, password_hash=hash_password("123")))
+    username = "vedant"
+    if db.scalar(select(User).where(User.username == username)) is None:
+        db.add(User(username=username, password_hash=hash_password("123")))
         db.commit()
 
 
-def _token_response(email: str, settings: Settings) -> dict[str, str]:
+def _token_response(username: str, settings: Settings) -> dict[str, str]:
     return {
-        "access_token": create_access_token(email, settings.jwt_signing_secret),
+        "access_token": create_access_token(username, settings.jwt_signing_secret),
         "token_type": "bearer",
-        "email": email,
+        "username": username,
     }
 
 
@@ -58,8 +58,8 @@ def require_user(
     """Require a valid, unexpired bearer token for protected API routes."""
     if credentials is None:
         raise HTTPException(status_code=401, detail="Sign in is required.")
-    email = verify_access_token(credentials.credentials, request.app.state.settings.jwt_signing_secret)
-    user = db.scalar(select(User).where(User.email == email)) if email else None
+    username = verify_access_token(credentials.credentials, request.app.state.settings.jwt_signing_secret)
+    user = db.scalar(select(User).where(User.username == username)) if username else None
     if user is None:
         raise HTTPException(status_code=401, detail="Your session is invalid or expired. Please sign in again.")
     return user
@@ -68,33 +68,33 @@ def require_user(
 @router.post("/signup")
 def signup(payload: SignupCredentials, request: Request, db: Session = Depends(get_db)) -> dict[str, str]:
     _ensure_demo_user(db)
-    email = _email(payload.email)
+    username = _username(payload.username)
     if not payload.password.strip():
         raise HTTPException(status_code=422, detail="Enter a password.")
     if payload.password != payload.confirm_password:
         raise HTTPException(status_code=422, detail="Passwords do not match.")
-    if db.scalar(select(User).where(User.email == email)) is not None:
-        raise HTTPException(status_code=409, detail="An account with this email already exists.")
-    user = User(email=email, password_hash=hash_password(payload.password))
+    if db.scalar(select(User).where(User.username == username)) is not None:
+        raise HTTPException(status_code=409, detail="That username is already taken.")
+    user = User(username=username, password_hash=hash_password(payload.password))
     db.add(user)
     db.commit()
-    return _token_response(email, request.app.state.settings)
+    return _token_response(username, request.app.state.settings)
 
 
 @router.post("/login")
 def login(payload: Credentials, request: Request, db: Session = Depends(get_db)) -> dict[str, str]:
     _ensure_demo_user(db)
-    email = _email(payload.email)
+    username = _username(payload.username)
     if not payload.password.strip():
         raise HTTPException(status_code=422, detail="Enter a password.")
-    user = db.scalar(select(User).where(User.email == email))
+    user = db.scalar(select(User).where(User.username == username))
     if user is None or not verify_password(payload.password, user.password_hash):
-        raise HTTPException(status_code=401, detail="Email or password is incorrect.")
-    return _token_response(email, request.app.state.settings)
+        raise HTTPException(status_code=401, detail="Username or password is incorrect.")
+    return _token_response(username, request.app.state.settings)
 
 
 @router.get("/me")
 def me(
     user: User = Depends(require_user),
 ) -> dict[str, str]:
-    return {"email": user.email}
+    return {"username": user.username}

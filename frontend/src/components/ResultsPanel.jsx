@@ -24,8 +24,9 @@ export function ResultsPanel({ result, provided, onStartNew }) {
         {/* Disclaimer */}
         <div className="results-disclaimer" role="note">
           <AlertTriangle size={13} className="notice-icon" aria-hidden="true" />
-          These are <strong>estimates</strong> based on observable cues, not a
-          diagnosis or proof of what someone truly feels.
+          {provided?.text
+            ? <>Text results are <strong>AI-generated wording estimates</strong>, not proof of what someone truly feels. Review the evidence and surrounding context.</>
+            : <>Displayed cues are not proof of what someone truly feels.</>}
         </div>
 
         {/* Modality cards — 3-col grid */}
@@ -39,7 +40,7 @@ export function ResultsPanel({ result, provided, onStartNew }) {
           <div className="results-insight-grid">
             {summary && (
               <div className="results-insight">
-                <p className="results-insight-title">Conversation tone summary</p>
+                <p className="results-insight-title">Sentence description</p>
                 <p className="results-insight-text">{summary}</p>
               </div>
             )}

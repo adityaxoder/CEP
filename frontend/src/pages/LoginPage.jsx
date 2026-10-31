@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowRight, Check, LockKeyhole, Mail } from 'lucide-react';
+import { ArrowRight, Check, LockKeyhole, UserRound } from 'lucide-react';
 
 export function LoginPage({ onLogin }) {
   const [mode, setMode] = useState('login');
@@ -11,12 +11,12 @@ export function LoginPage({ onLogin }) {
     setError('');
     setIsSubmitting(true);
     const data = new FormData(event.currentTarget);
-    const email = String(data.get('email') || '').trim();
+    const username = String(data.get('username') || '').trim();
     const password = String(data.get('password') || '');
     const confirmPassword = String(data.get('confirmPassword') || '');
 
-    if (!email || !password.trim()) {
-      setError('Enter your email and password.');
+    if (!username || !password.trim()) {
+      setError('Enter your username and password.');
       setIsSubmitting(false);
       return;
     }
@@ -27,7 +27,7 @@ export function LoginPage({ onLogin }) {
     }
 
     try {
-      await onLogin({ email, password, confirmPassword, mode });
+      await onLogin({ username, password, confirmPassword, mode });
     } catch (submitError) {
       setError(submitError.message || 'Could not sign in. Please try again.');
     } finally {
@@ -73,11 +73,11 @@ export function LoginPage({ onLogin }) {
           </div>
 
           <form className="auth-form" onSubmit={handleSubmit}>
-            <label className="auth-field" htmlFor="email-input">
-              <span>Email</span>
+            <label className="auth-field" htmlFor="username-input">
+              <span>Username</span>
               <span className="auth-input-wrap">
-                <Mail size={16} aria-hidden="true" />
-                <input id="email-input" type="email" name="email" placeholder="name@example.com" autoComplete="email" required />
+                <UserRound size={16} aria-hidden="true" />
+                <input id="username-input" type="text" name="username" placeholder="Enter username" autoComplete="username" maxLength={64} required />
               </span>
             </label>
 
@@ -106,7 +106,7 @@ export function LoginPage({ onLogin }) {
             </button>
           </form>
 
-          {!isSignup && <p className="auth-demo-note">Local demo account: vedant@gmail.com · password: 123</p>}
+          {!isSignup && <p className="auth-demo-note">Local demo account: username <strong>vedant</strong> · password: 123</p>}
 
         </div>
       </section>

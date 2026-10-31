@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import inspect
 import logging
+import re
 from typing import Any
 
 import aiohttp
@@ -296,7 +297,76 @@ class HuggingFaceTextProvider(TextEmotionProvider):
 
 
 class BaselineTextProvider(TextEmotionProvider):
-    """Deterministic baseline text emotion provider for local offline development only."""
+    """Local explainable wording-cue rules for the offline classroom demo."""
+
+    RULES: dict[str, tuple[str, ...]] = {
+        "positive": (
+            "good", "great", "excellent", "wonderful", "fantastic", "amazing", "awesome", "love", "enjoy",
+            "happy", "glad", "pleased", "delighted", "excited", "grateful", "thankful", "appreciate", "thanks",
+            "thank you", "well done", "nice work", "great job", "looks good", "sounds good", "that helps", "helpful",
+            "brilliant", "perfect", "beautiful", "proud", "hopeful", "confident", "looking forward", "welcome",
+            "congratulations", "congrats", "support", "inspiring", "impressed", "satisfied", "relieved", "kind",
+            "generous", "thoughtful", "useful", "success", "successful", "win", "positive", "cheerful", "fun",
+            "enjoyable", "peaceful", "calm", "safe", "trust", "respect", "agree", "absolutely", "yes",
+        ),
+        "concern": (
+            "worried", "concerned", "anxious", "nervous", "afraid", "scared", "fear", "uncertain", "unsure", "doubt",
+            "confused", "lost", "stuck", "struggling", "difficult", "hard time", "hard to", "challenging", "problem", "issue", "trouble",
+            "risk", "unsafe", "hurt", "sad", "unhappy", "disappointed", "upset", "lonely", "tired", "exhausted",
+            "overwhelmed", "stressed", "stressful", "frustrated", "sorry", "apologize", "apologies", "regret", "miss",
+            "missing", "fail", "failed", "failure", "late", "delay", "delayed", "can't", "cannot", "unable", "need help",
+            "not sure", "not working", "doesn't work", "didn't work", "what happened", "please help", "help me",
+            "could you explain", "unclear", "unfortunately", "issue with", "having trouble", "feeling down", "bad day",
+        ),
+        "frustration": (
+            "angry", "mad", "furious", "annoyed", "irritated", "frustrated", "fed up", "sick of", "hate", "ridiculous",
+            "unacceptable", "disgusting", "awful", "terrible", "horrible", "worst", "stupid", "waste", "useless", "absurd",
+            "outrageous", "incompetent", "disrespectful", "unprofessional", "lazy", "careless", "impossible", "never again",
+            "this is unacceptable", "what is wrong", "does not make sense", "not okay", "not acceptable", "so annoying",
+            "fed up with", "had enough", "stop doing", "you failed", "you ignored", "you never", "you always", "screwed up",
+            "mess", "broken", "ridiculous", "pathetic", "furious about", "angry about", "annoying", "irritating",
+            "wasted my time", "wasting time", "don't care", "do not care", "absolutely not", "no way",
+        ),
+    }
+
+    EXTRA_RULES: dict[str, tuple[str, ...]] = {
+        "positive": (
+            "accomplished", "accomplishment", "adore", "affection", "agreeable", "at ease", "a pleasure", "best wishes",
+            "bravo", "can do", "care", "caring", "charming", "comfortable", "commend", "compliment", "delightful",
+            "encouraging", "enjoyed", "enthusiasm", "enthusiastic", "excellent work", "fantastic work", "feel better",
+            "feel great", "feel good", "fine", "forgive", "friendly", "glad to hear", "good news", "good idea",
+            "good luck", "good point", "graceful", "haha", "ha ha", "heartfelt", "honored", "improve", "improved",
+            "improvement", "joy", "joyful", "laugh", "laughter", "liked", "lovely", "magnificent", "marvelous",
+            "meaningful", "motivated", "optimistic", "outstanding", "overjoyed", "pleasant", "pleasure", "reassured",
+            "recommend", "recommendation", "rewarding", "safe and sound", "smile", "smiling", "so proud", "splendid",
+            "terrific", "thank you so much", "thanks a lot", "thrilled", "top notch", "understand", "valued", "welcome aboard",
+            "well appreciated", "well received", "you helped", "you are amazing", "you are great", "you did well",
+        ),
+        "concern": (
+            "abandoned", "alone", "apprehensive", "ashamed", "breakdown", "cannot understand", "can't understand", "concern",
+            "concerns me", "cry", "crying", "depressed", "desperate", "devastated", "embarrassed", "emergency", "error",
+            "fail to", "feeling anxious", "feeling worried", "feel bad", "feel worse", "forgot", "forgotten", "grief", "grieving",
+            "helpless", "hesitant", "ill", "injured", "in pain", "in trouble", "inconvenient", "inconvenience", "is there a problem",
+            "let down", "let me down", "missed", "missing out", "mistake", "mistakes", "need support", "not okay", "not ready",
+            "not feeling well", "not feeling good", "panic", "panicked", "pressure", "pressured", "regretful", "rough day",
+            "scary", "shaky", "sick", "sorrow", "sorry to hear", "strange", "unclear to me", "uncomfortable", "unwell",
+            "vulnerable", "what should i do", "what do i do", "wish i knew", "worst day", "worried about", "wrong with",
+            "you seem upset", "you seem worried", "not confident", "need assistance", "please clarify", "please explain",
+        ),
+        "frustration": (
+            "annoyed with", "are you kidding", "at my limit", "bad service", "blame", "blaming", "cancel this", "completely wrong",
+            "couldn't care less", "cut it out", "deceived", "disappointed in you", "doesn't listen", "don't listen", "done with this",
+            "embarrassing", "enough already", "fed up now", "get lost", "give it back", "go away", "how dare you", "i demand",
+            "i refuse", "i'm done", "i am done", "i've had enough", "i have had enough", "ignored me", "inexcusable", "insane",
+            "it's a joke", "it is a joke", "keep messing", "leave me alone", "liar", "lied", "makes me angry", "makes no sense",
+            "not impressed", "not listening", "not what i asked", "offensive", "poor quality", "quit wasting", "remove this",
+            "ridiculously bad", "shut up", "so disappointed", "stop it", "stop this", "that's enough", "that is enough",
+            "this is a joke", "this is nonsense", "this sucks", "totally useless", "unbelievable", "unfair", "unfairly",
+            "very annoying", "what a mess", "what the hell", "why would you", "you are wrong", "you messed up", "you ruined",
+        ),
+    }
+
+    NEGATIONS = {"not", "no", "never", "hardly", "barely", "isn't", "aren't", "wasn't", "weren't", "don't", "doesn't", "didn't", "can't", "cannot", "won't", "wouldn't"}
 
     def __init__(self, max_text_length: int = DEFAULT_MAX_TEXT_LENGTH) -> None:
         self.max_text_length = int(max_text_length)
@@ -317,43 +387,70 @@ class BaselineTextProvider(TextEmotionProvider):
 
         return cleaned
 
-    async def analyze_text(self, text: str) -> ModalityResult:
-        """Analyze text using simple deterministic keyword rules.
+    @staticmethod
+    def _variants(phrase: str) -> tuple[str, ...]:
+        """Add a few common English inflections for one-word cues."""
+        forms = [phrase]
+        if " " in phrase or len(phrase) < 4:
+            return tuple(forms)
+        if phrase.endswith("y") and len(phrase) > 4:
+            forms.extend((phrase[:-1] + "ies", phrase[:-1] + "ied", phrase + "ing"))
+        elif phrase.endswith("e"):
+            forms.extend((phrase + "s", phrase + "d", phrase[:-1] + "ing"))
+        else:
+            forms.extend((phrase + "s", phrase + "es", phrase + "ed", phrase + "ing"))
+        return tuple(forms)
 
-        Unmistakably labels the result as development-only and never claims to be a real model prediction.
-        """
+    async def analyze_text(self, text: str) -> ModalityResult:
+        """Match a curated local vocabulary and return the evidence, without a confidence score."""
         cleaned = self.validate_input(text)
         lower = cleaned.lower()
+        evidence_by_category: dict[str, list[str]] = {}
+        for category, phrases in self.RULES.items():
+            phrases = (*phrases, *self.EXTRA_RULES[category])
+            matches: list[str] = []
+            for phrase in phrases:
+                found = False
+                for variant in self._variants(phrase):
+                    pattern = rf"(?<!\w){re.escape(variant)}(?!\w)"
+                    for match in re.finditer(pattern, lower):
+                        prefix = lower[:match.start()]
+                        prefix = re.split(r"[.!?;,:]|\b(?:but|however|yet|although)\b", prefix)[-1]
+                        prefix_words = re.findall(r"[\w']+", prefix)
+                        if self.NEGATIONS.intersection(prefix_words[-3:]):
+                            continue
+                        matches.append(match.group(0))
+                        found = True
+                        break
+                    if found:
+                        break
+            if matches:
+                evidence_by_category[category] = matches
 
-        # Deterministic keyword detection matching project baseline conventions
-        if any(w in lower for w in ("worried", "concerned", "problem", "issue", "sorry", "difficult", "upset")):
-            base_label = "sadness"
-            score = 0.79
-        elif any(w in lower for w in ("thanks", "thank you", "great", "happy", "appreciate", "excellent", "love")):
-            base_label = "joy"
-            score = 0.88
-        elif any(w in lower for w in ("angry", "furious", "terrible", "hate", "unacceptable", "ridiculous")):
-            base_label = "anger"
-            score = 0.85
-        elif any(w in lower for w in ("scared", "afraid", "fear", "terrified", "panic")):
-            base_label = "fear"
-            score = 0.81
-        elif any(w in lower for w in ("wow", "surprise", "unexpected", "astonishing", "shocking")):
-            base_label = "surprise"
-            score = 0.77
-        elif any(w in lower for w in ("disgust", "gross", "nasty", "revolting", "awful")):
-            base_label = "disgust"
-            score = 0.80
+        categories = set(evidence_by_category)
+        if len(categories) > 1:
+            label = "Mixed"
+            description = "Rules matched wording from more than one cue group."
+        elif categories:
+            category = next(iter(categories))
+            label = {"positive": "Positive wording", "concern": "Concern wording", "frustration": "Frustration wording"}[category]
+            description = f"Rules matched wording associated with {category} cues."
         else:
-            base_label = "neutral"
-            score = 0.72
+            label = "No clear cue"
+            description = "No supported positive, concern, or frustration wording rule matched this text."
 
-        label = f"{base_label} (dev-baseline)"
-        explanation = generate_baseline_explanation(base_label)
+        evidence = [phrase for phrases in evidence_by_category.values() for phrase in phrases]
+        explanation = (
+            f"Rule-based wording cue. {description} "
+            + (f"Matched evidence: {', '.join(evidence)}." if evidence else "No matching evidence was found.")
+            + " This does not determine the writer's real feelings or account for context or sarcasm."
+        )
 
         return ModalityResult(
             label=label,
-            confidence=score,
+            confidence=None,
             explanation=explanation,
-            all_scores={label: score},
+            all_scores=None,
+            method="rule-based",
+            evidence=evidence,
         )

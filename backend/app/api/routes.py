@@ -8,6 +8,8 @@ from typing import cast
 
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
 from PIL import Image
+from sqlalchemy import delete, select
+from sqlalchemy.orm import Session
 
 from app.api.schemas import (
     AnalysisResponse,
@@ -20,11 +22,14 @@ from app.api.schemas import (
 )
 from app.api.auth import require_user
 from app.config import Settings
+from app.db.session import get_db
 from app.infrastructure.errors import ApiError, request_id_for
+from app.models.analysis_history import AnalysisHistory
 from app.models.audio import is_valid_audio_signature
 from app.models.base import ModalityResult
 from app.models.coach import ALLOWED_COACH_STYLES
 from app.models.exceptions import ProviderError
+from app.models.user import User
 from app.services.audio_service import analyze_audio_emotion
 from app.services.coach_service import reframe_text
 from app.services.fusion_service import fuse_modalities
@@ -76,7 +81,8 @@ async def health(request: Request) -> HealthResponse:
 @router.post("/analyze", response_model=AnalysisResponse, tags=["analysis"])
 async def analyze(
     request: Request,
-    _user=Depends(require_user),
+    user: User = Depends(require_user),
+    db: Session = Depends(get_db),
     text: str | None = Form(None),
     image: UploadFile | None = File(None),
     audio: UploadFile | None = File(None),
@@ -222,7 +228,7 @@ async def analyze(
         text_raw=trimmed_text if has_text else None,
     )
 
-    return AnalysisResponse(
+    response = AnalysisResponse(
         requestId=request_id_for(request),
         modalities=ModalitiesResult(
             text=text_res,
@@ -234,6 +240,67 @@ async def analyze(
         mismatch=fusion_output.mismatch,
         suggestion=fusion_output.suggestion,
     )
+    db.add(AnalysisHistory(
+        user_id=user.id,
+        request_id=response.requestId,
+        provided={"text": has_text, "image": has_image, "audio": has_audio},
+        result=response.model_dump(mode="json"),
+    ))
+    db.commit()
+    return response
+
+
+@router.get("/history", tags=["history"])
+def list_analysis_history(
+    user: User = Depends(require_user),
+    db: Session = Depends(get_db),
+) -> dict[str, list[dict[str, object]]]:
+    """List only the signed-in user's saved local analysis results."""
+    records = db.scalars(
+        select(AnalysisHistory)
+        .where(AnalysisHistory.user_id == user.id)
+        .order_by(AnalysisHistory.created_at.desc(), AnalysisHistory.id.desc())
+    ).all()
+    return {"items": [
+        {
+            "id": record.id,
+            "requestId": record.request_id,
+            "createdAt": record.created_at.isoformat(),
+            "provided": record.provided,
+            "result": record.result,
+        }
+        for record in records
+    ]}
+
+
+@router.delete("/history", tags=["history"])
+def clear_analysis_history(
+    user: User = Depends(require_user),
+    db: Session = Depends(get_db),
+) -> dict[str, int]:
+    """Delete all saved analysis results belonging to the signed-in user."""
+    result = db.execute(delete(AnalysisHistory).where(AnalysisHistory.user_id == user.id))
+    db.commit()
+    return {"deleted": result.rowcount or 0}
+
+
+@router.delete("/history/{entry_id}", tags=["history"])
+def delete_analysis_history_entry(
+    entry_id: int,
+    user: User = Depends(require_user),
+    db: Session = Depends(get_db),
+) -> dict[str, bool]:
+    """Delete one saved result only when it belongs to the signed-in user."""
+    result = db.execute(
+        delete(AnalysisHistory).where(
+            AnalysisHistory.id == entry_id,
+            AnalysisHistory.user_id == user.id,
+        )
+    )
+    db.commit()
+    if not result.rowcount:
+        raise ApiError(status_code=404, code="HISTORY_NOT_FOUND", message="That history item was not found.")
+    return {"deleted": True}
 
 
 @router.post("/coach", response_model=CoachResponse, tags=["coach"])

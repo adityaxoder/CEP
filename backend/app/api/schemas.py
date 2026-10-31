@@ -12,22 +12,25 @@ class ModalityResult(BaseModel):
 
     label: str = Field(
         ...,
-        description="The estimated emotion cue label returned by the model.",
+        description="The observable cue label returned by the configured rule or model provider.",
     )
-    confidence: float = Field(
-        ...,
+    confidence: float | None = Field(
+        default=None,
         ge=0.0,
         le=1.0,
-        description="The model's actual prediction score clamped between 0.0 and 1.0.",
+        description="An actual model score when available. Rule-based results leave this unset.",
     )
     explanation: str = Field(
         ...,
-        description="A brief, non-diagnostic explanation based strictly on observable wording cues.",
+        description="A brief, non-diagnostic explanation of the observable cue or matching rule.",
     )
     all_scores: dict[str, float] | None = Field(
         default=None,
         description="Optional full score distribution across all evaluated labels for downstream fusion.",
     )
+    method: str | None = Field(default=None, description="How this cue was produced, such as rule-based.")
+    evidence: list[str] | None = Field(default=None, description="Matched wording evidence for explainable text rules.")
+    description: str | None = Field(default=None, description="Plain-language summary of the submitted text and observable wording cues.")
 
 
 
@@ -97,7 +100,7 @@ class CoachRequest(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     text: str = Field(..., min_length=1, max_length=10_000)
-    style: Literal["light", "strict", "happy", "sad", "formal", "informal"]
+    style: Literal["friendly", "formal", "concise", "empathetic", "professional", "assertive", "diplomatic", "casual"]
 
 
 class CoachResponse(BaseModel):

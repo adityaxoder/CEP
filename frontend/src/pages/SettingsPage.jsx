@@ -1,12 +1,12 @@
 import { Check, LogOut, ShieldCheck, Trash2 } from 'lucide-react';
 
-export function SettingsPage({ historyCount, onClearHistory, onSignOut }) {
+export function SettingsPage({ historyCount, historyLoading, historyError, onClearHistory, onSignOut }) {
   return (
     <main id="main-content" className="settings-page">
       <div className="page-intro">
         <div>
           <h1 className="page-title"><ShieldCheck size={22} aria-hidden="true" /> Privacy & settings</h1>
-          <p className="page-subtitle">Control what this local prototype keeps and how you leave it.</p>
+          <p className="page-subtitle">Review what this prototype keeps and where analysis text is processed.</p>
         </div>
       </div>
 
@@ -17,11 +17,12 @@ export function SettingsPage({ historyCount, onClearHistory, onSignOut }) {
             <span className="settings-status"><Check size={13} aria-hidden="true" /> Active</span>
           </div>
           <div className="section-card-body settings-copy">
-            <p>Analysis history stays in this browser session while the UI prototype is running. Raw images and audio are not uploaded in mock mode.</p>
+            <p>Analysis results are stored in this app’s local database and separated by username. Text analysis and coach rewrites are processed by Google’s AI service; its service terms apply. Do not submit sensitive or private text.</p>
             <ul className="settings-list">
-              <li><Check size={14} aria-hidden="true" /> No raw media is stored by this interface.</li>
-              <li><Check size={14} aria-hidden="true" /> Results are estimates, not diagnoses.</li>
-              <li><Check size={14} aria-hidden="true" /> Backend processing will require fresh consent.</li>
+              <li><Check size={14} aria-hidden="true" /> Analysis outputs are saved until you delete them.</li>
+              <li><Check size={14} aria-hidden="true" /> Uploaded image and audio files are not saved in history.</li>
+              <li><Check size={14} aria-hidden="true" /> Coach rewrites use the style you select.</li>
+              <li><Check size={14} aria-hidden="true" /> Results are wording estimates, not facts about anyone’s feelings.</li>
             </ul>
           </div>
         </section>
@@ -29,14 +30,15 @@ export function SettingsPage({ historyCount, onClearHistory, onSignOut }) {
         <section className="section-card" aria-labelledby="data-heading">
           <div className="section-card-header">
             <h2 id="data-heading" className="section-card-title">Session data</h2>
-            <span className="settings-count">{historyCount} saved</span>
+            <span className="settings-count">{historyLoading ? 'Loading…' : `${historyCount} saved`}</span>
           </div>
           <div className="section-card-body settings-copy">
-            <p>Clear your analysis results from this session at any time. This cannot be undone.</p>
-            {historyCount === 0 && <p className="settings-empty">No analyses are saved yet. Complete an analysis to see it listed here.</p>}
-            <button type="button" className="clear-btn settings-action" onClick={onClearHistory} disabled={historyCount === 0}>
+            <p>Delete an individual result from History, or remove all saved results for this account here.</p>
+            {historyError && <p className="auth-error" role="alert">{historyError}</p>}
+            {historyCount === 0 && !historyLoading && <p className="settings-empty">No analyses are saved yet. Complete an analysis to see it listed here.</p>}
+            <button type="button" className="clear-btn settings-action" onClick={onClearHistory} disabled={historyCount === 0 || historyLoading}>
               <Trash2 size={14} aria-hidden="true" />
-              Clear session history
+              Clear all saved history
             </button>
           </div>
         </section>

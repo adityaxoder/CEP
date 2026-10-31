@@ -20,7 +20,7 @@ import { useAnalysis } from '../hooks/useAnalysis';
 const TAB_CONTENT = {
   text: {
     label: 'Text analysis',
-    description: 'Paste a message to estimate the tone and emotional cues in its wording.',
+    description: 'Send a message for an AI wording-cue estimate. This does not identify anyone’s real feelings.',
     icon: FileText,
   },
   image: {
@@ -173,7 +173,7 @@ export function AnalyzePage({ activeTab, selectedResult, onTabChange, onAnalysis
             </div>
           )}
 
-          <ConsentNotice checked={consented} onConsent={setConsented} />
+          <ConsentNotice checked={consented} onConsent={setConsented} hasText={Boolean(text.trim())} savesAnalysis />
           <form onSubmit={handleSubmit} className="analysis-form">
             <button type="submit" className="analyze-btn" disabled={!canSubmit} aria-describedby={!canSubmit ? 'submit-hint' : undefined}>
               {status === 'loading' ? <><Loader2 size={16} className="spin" /> Analysing…</> : <><Sparkles size={16} /> Analyse {activeTab}</>}

@@ -10,7 +10,10 @@ from app.models.exceptions import ProviderValidationError
 
 logger = logging.getLogger(__name__)
 
-ALLOWED_COACH_STYLES = {"light", "strict", "happy", "sad", "formal", "informal"}
+ALLOWED_COACH_STYLES = {
+    "friendly", "formal", "concise", "empathetic",
+    "professional", "assertive", "diplomatic", "casual",
+}
 
 
 def _lower_first(text: str) -> str:
@@ -39,22 +42,50 @@ class BaselineCoachProvider(CoachProvider):
                 f"Style '{style}' is not recognized. Allowed styles: {', '.join(sorted(ALLOWED_COACH_STYLES))}."
             )
 
-        core = re.sub(r"[.!?]+$", "", normalized_text)
-        subject = _lower_first(core)
+        core = re.sub(r"[.!?]+$", "", normalized_text).strip()
+        terminal = normalized_text[-1] if normalized_text[-1:] in {".", "?", "!"} else "."
+        sentence = f"{core}{terminal}"
 
-        reframes = {
-            "light": f"Just a quick note: {subject} when you have a moment.",
-            "strict": f"Please {subject} promptly.",
-            "happy": f"I'd be happy to help with this: {subject}!",
-            "sad": f"I'm feeling a little discouraged about this: {subject}.",
-            "formal": f"Please be advised that {subject}. Your attention to this matter would be appreciated.",
-            "informal": f"Hey, can we {subject}?",
-        }
+        if normalized_style == "friendly":
+            request = re.match(r"^(?:please\s+)?(can|could|would) you\s+(.+)$", core, flags=re.IGNORECASE)
+            if request:
+                requested_action = re.sub(r"^please\s+", "", request.group(2), flags=re.IGNORECASE)
+                reframed = f"When you have a moment, could you {_lower_first(requested_action)}? Thanks!"
+            elif core.lower().startswith("please "):
+                reframed = f"When you have a moment, {_lower_first(core[7:])}. Thanks!"
+            else:
+                reframed = f"Just sharing: {sentence}"
+        elif normalized_style == "formal":
+            request = re.match(r"^(?:please\s+)?(can|could|would) you\s+(.+)$", core, flags=re.IGNORECASE)
+            if request:
+                requested_action = re.sub(r"^please\s+", "", request.group(2), flags=re.IGNORECASE)
+                reframed = f"Would you please {_lower_first(requested_action)}?"
+            elif core.lower().startswith("please "):
+                reframed = f"I would appreciate it if you could {_lower_first(core[7:])}."
+            else:
+                reframed = f"Please note: {sentence}"
+        elif normalized_style == "concise":
+            concise = core
+            for filler in (
+                r"\bI just wanted to\s+", r"\bI was wondering if\s+", r"\bbasically\s+",
+                r"\bactually\s+", r"\bjust\s+", r"\bkind of\s+", r"\bsort of\s+",
+            ):
+                concise = re.sub(filler, "", concise, flags=re.IGNORECASE)
+            concise = re.sub(r"\s+", " ", concise).strip()
+            reframed = f"{concise}{terminal}"
+        elif normalized_style == "empathetic":
+            reframed = f"I hear you. {sentence}"
+        elif normalized_style == "professional":
+            reframed = f"For your attention: {sentence}"
+        elif normalized_style == "assertive":
+            reframed = f"To be clear: {sentence}"
+        elif normalized_style == "diplomatic":
+            reframed = f"I would like to raise this constructively: {sentence}"
+        else:  # casual
+            reframed = f"Just a quick note: {sentence}"
 
-        reframed = reframes.get(normalized_style, reframes["light"])
         explanation = (
-            f"The sentence was adjusted toward a {normalized_style} delivery "
-            "while keeping the original intent as closely as possible."
+            f"A deterministic {normalized_style} template was applied. Review the suggestion to make sure it preserves your intended meaning."
         )
 
         return CoachResult(

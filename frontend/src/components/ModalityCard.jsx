@@ -1,7 +1,7 @@
 /**
  * ModalityCard – matches the reference "Craft Joy / Neutral" card style:
  *   Modality label  •  Status dot chip
- *   Big confidence %
+ *   Model score when available
  *   Mini sparkline SVG
  *   Emotion label badge
  *   Explanation text
@@ -43,8 +43,9 @@ export function ModalityCard({ modality, data, missing }) {
     );
   }
 
+  const hasConfidence = data.confidence !== null && data.confidence !== undefined && Number.isFinite(Number(data.confidence));
   const rawConfidence = Number(data.confidence);
-  const confidence = Number.isFinite(rawConfidence) ? Math.min(1, Math.max(0, rawConfidence)) : 0;
+  const confidence = hasConfidence ? Math.min(1, Math.max(0, rawConfidence)) : 0;
   const pct     = Math.round(confidence * 100);
   const isHigh  = pct >= 70;
   const isMid   = pct >= 40 && pct < 70;
@@ -82,7 +83,7 @@ export function ModalityCard({ modality, data, missing }) {
       </div>
 
       {/* Big percentage + sparkline */}
-      <div className="modality-confidence-row">
+      {hasConfidence && <div className="modality-confidence-row">
         <p
           className="modality-pct"
           role="meter"
@@ -104,18 +105,24 @@ export function ModalityCard({ modality, data, missing }) {
           <path d={areaPath}  fill={fillColor} />
           <path d={linePath}  fill="none" stroke={strokeColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-      </div>
+      </div>}
 
       {/* Confidence bar */}
-      <div className="confidence-track" aria-hidden="true">
+      {hasConfidence && <div className="confidence-track" aria-hidden="true">
         <div className={`confidence-fill ${fillClass}`} style={{ width: `${pct}%` }} />
-      </div>
+      </div>}
 
       {/* Label badge */}
       <div className="modality-label-row">
-        <span className={`modality-label-badge ${badgeClass}`}>{data.label}</span>
-        <span className="confidence-label">{confidenceNote}</span>
+        <span className={`modality-label-badge ${hasConfidence ? badgeClass : 'badge--blue'}`}>{data.label}</span>
+        <span className="confidence-label">
+          {data.method === 'rule-based' ? 'Rule-based cue' : data.method ? 'AI wording estimate' : hasConfidence ? confidenceNote : ''}
+        </span>
       </div>
+
+      {data.evidence?.length > 0 && (
+        <p className="modality-explanation"><strong>Matched wording:</strong> {data.evidence.join(', ')}</p>
+      )}
 
       {/* Explanation */}
       {data.explanation && (
